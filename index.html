@@ -99,7 +99,7 @@ const DEFAULT_STATIONS=[
 const money=n=>`${Math.round(Number(n)||0).toLocaleString('en-US')} IQD`;
 const uid=prefix=>`${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;
 const clone=x=>JSON.parse(JSON.stringify(x));
-function localDateKey(date=new Date()){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit'}).format(date)}
+function localDateKey(date=new Date()){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);const v=Object.fromEntries(p.map(x=>[x.type,x.value]));return `${v.year}-${v.month}-${v.day}`}
 function localParts(date=new Date()){const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baghdad',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date);return Object.fromEntries(parts.map(p=>[p.type,p.value]))}
 function baghdadDayStart(now=new Date()){const p=localParts(now);let d=localDateKey(now);if(Number(p.hour)<6)d=localDateKey(new Date(now.getTime()-86400000));return d}
 function dayForTimestamp(ts){return localDateKey(new Date(ts))}

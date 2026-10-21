@@ -112,6 +112,16 @@ test('restored archived sessions validate dates, rates, duration and charge', ()
   assert.match(source, /Backup contains an invalid archived session record/);
 });
 
+test('history table escapes imported station labels and bill statuses', () => {
+  const start = source.indexOf('function renderHistory(');
+  const end = source.indexOf('function archiveEligible(', start);
+  assert.ok(start >= 0 && end > start, 'history renderer must exist');
+  const fn = source.slice(start, end);
+  assert.match(fn, /escapeHTML\(s\.stationId\)/, 'station labels must be escaped in history');
+  assert.match(fn, /escapeHTML\(b\.status\)/, 'bill statuses must be escaped in history');
+  assert.doesNotMatch(fn, /<td>\$\{s\.stationId\}<\/td>/, 'raw station labels must not enter HTML');
+});
+
 test('daily archiving moves old sessions and preserves sales and cash records', () => {
   const start = source.indexOf('function archiveEligible(');
   const end = source.indexOf('function manualArchive(', start);

@@ -657,6 +657,21 @@ test('finishing a session creates exactly one bill and a cash movement', () => {
 });
 
 
+test('repeated finish click after a successful completion cannot duplicate financial records', () => {
+  const h = makeFinishSessionHarness();
+  h.finishSession('PS5-02');
+  const first = h.getData();
+  assert.equal(first.sessions.length, 1);
+  assert.equal(first.bills.length, 1);
+  assert.equal(first.adjustments.length, 1);
+
+  h.finishSession('PS5-02');
+  const afterRepeat = h.getData();
+  assert.equal(afterRepeat.sessions.length, 1);
+  assert.equal(afterRepeat.bills.length, 1);
+  assert.equal(afterRepeat.adjustments.length, 1);
+});
+
 test('duplicate session completion is blocked before creating a second bill or cash movement', () => {
   const h = makeFinishSessionHarness();
   const data = h.getData();

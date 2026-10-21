@@ -76,8 +76,8 @@ test('timed sessions alert without auto-finishing', () => {
 });
 
 test('default owner PIN warning is visible until the owner changes the PIN', () => {
-  assert.match(source, /id="defaultPinWarning"[^>]*role="status"/);
-  assert.match(source, /data\.settings\.pin==='1234'\?'block':'none'/);
+  assert.match(html, /id="defaultPinWarning"[^>]*role="status"/, 'PIN warning markup must be present in the page');
+  assert.match(source, /data\.settings\.pin==='1234'\?'block':'none'/, 'warning must disappear after changing the default PIN');
 });
 
 test('clear history protects data with owner PIN and downloads backup first', () => {

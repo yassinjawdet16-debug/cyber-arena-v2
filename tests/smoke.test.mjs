@@ -837,3 +837,23 @@ test('daily cash register counts archived session income without counting duplic
   assert.equal(h.elements.cashSessions.textContent, 'IQD 3000');
   assert.equal(h.elements.cashTotal.textContent, 'IQD 3000');
 });
+
+
+test('backup restore rejects active sessions with invalid station, rate, duration, or reused IDs', () => {
+  const start = source.indexOf('function restoreJSON()');
+  const end = source.indexOf('function csvCell(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /for\(const \[id,a\] of Object\.entries\(imported\.active\)\)/);
+  assert.match(fn, /!stationIds\.has\(id\)/, 'active sessions must belong to a known station');
+  assert.match(fn, /Number\(a\.rate\)!==DEFAULT_STATIONS\.find\(x=>x\.id===id\)\.rate/, 'active rate must match station pricing');
+  assert.match(fn, /Number\(a\.durationMinutes\)<=0/, 'active duration must be positive');
+  assert.match(fn, /reuses a completed or archived session ID/, 'active IDs must not reuse completed IDs');
+});
+
+test('backup restore rejects session bills that do not link to a restored session', () => {
+  const start = source.indexOf('function restoreJSON()');
+  const end = source.indexOf('function csvCell(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /row\.kind==='session'&&\(!stationIds\.has\(row\.stationId\)\|\|typeof row\.sessionId!=='string'\|\|!sessionIds\.has\(row\.sessionId\)/);
+  assert.match(fn, /Backup contains an invalid bill record/);
+});

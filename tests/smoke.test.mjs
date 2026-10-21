@@ -1127,9 +1127,9 @@ test('backup restore rejects record ID collisions across different record types'
 
 
 test('corrupt local storage blocks saves instead of overwriting potentially recoverable business data', () => {
-  assert.match(source, /let data,storageLoadError=null;/);
-  assert.match(source, /storageLoadError=String\(e&&e\.message\|\|e\);data=defaultData\(\)/);
-  assert.match(source, /if\(storageLoadError\)\{setStatus\('🔴 Saved data could not be read, so saving is blocked to protect it\.'/);
-  assert.match(source, /storageLoadError=null;renderAll\(\);setStatus\('🟢 Backup restored after validation/);
-  assert.match(source, /if\(storageLoadError\)setStatus\('🔴 Saved data could not be read/);
-});
+  assert.ok(source.includes('let data,storageLoadError=null;'));
+  assert.ok(source.includes('storageLoadError=String(e&&e.message||e);data=defaultData()'));
+  assert.ok(source.includes("if(storageLoadError){setStatus('🔴 Saved data could not be read, so saving is blocked to protect it."));
+  assert.ok(source.includes("storageLoadError=null;renderAll();setStatus('🟢 Backup restored after validation"));
+  assert.ok(source.includes("if(storageLoadError)setStatus('🔴 Saved data could not be read"));
+});;

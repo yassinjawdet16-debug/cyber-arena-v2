@@ -837,6 +837,14 @@ test('250-IQD rounding handles exact ties and values around the boundary', () =>
   assert.equal(round250(0), 0);
 });
 
+test('rounding helper safely handles invalid and extreme amounts', () => {
+  assert.equal(round250(-250), 0);
+  assert.equal(round250('invalid'), 0);
+  assert.equal(round250(Number.NaN), 0);
+  assert.equal(round250(Number.POSITIVE_INFINITY), 0);
+  assert.equal(round250(Number.MAX_VALUE), 0);
+});
+
 
 function makeAddSaleHarness({ saveResult = true, name = 'Water', qty = '2', price = '750' } = {}) {
   const start = source.indexOf('function addSale()');

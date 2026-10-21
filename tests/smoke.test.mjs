@@ -198,6 +198,18 @@ test('Clear History archives sessions without deleting sales or bills', () => {
   assert.doesNotMatch(fn, /data\.bills\s*=/);
 });
 
+test('daily archive preserves active sessions, sales, cash movements, and unprinted bill state', () => {
+  const start = source.indexOf('function archiveEligible(');
+  const end = source.indexOf('function manualArchive(', start);
+  const fn = source.slice(start, end);
+  assert.doesNotMatch(fn, /data\.active\s*=/, 'daily archiving must not replace active sessions');
+  assert.doesNotMatch(fn, /data\.sales\s*=/, 'daily archiving must preserve extra sales');
+  assert.doesNotMatch(fn, /data\.adjustments\s*=/, 'daily archiving must preserve cash movements');
+  assert.doesNotMatch(fn, /b\.status\s*=\s*'printed'/, 'archiving must not mark an unprinted bill as printed');
+  assert.match(fn, /data\.bills/, 'daily archiving may archive bills without deleting them');
+  assert.match(fn, /if\(!save\(\)\)\{data=JSON\.parse\(previousData\)/, 'failed archive saves must restore the original data');
+});
+
 test('interrupted print jobs return to the unprinted queue with uncertain status on reload', () => {
   const start = source.indexOf('function normalize(');
   const end = source.indexOf('function save(', start);

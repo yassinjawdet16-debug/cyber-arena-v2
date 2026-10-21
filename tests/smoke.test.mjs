@@ -75,6 +75,11 @@ test('timed sessions alert without auto-finishing', () => {
   assert.doesNotMatch(source, /if\(expired\.length\)[\s\S]{0,1000}finishSession\(/);
 });
 
+test('default owner PIN warning is visible until the owner changes the PIN', () => {
+  assert.match(source, /id="defaultPinWarning"[^>]*role="status"/);
+  assert.match(source, /data\.settings\.pin==='1234'\?'block':'none'/);
+});
+
 test('clear history protects data with owner PIN and downloads backup first', () => {
   const start = source.indexOf('function clearHistoryProtected(');
   const end = source.indexOf('function fullResetProtected(', start);

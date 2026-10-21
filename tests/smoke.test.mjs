@@ -447,3 +447,13 @@ test('global status messages are announced accessibly', () => {
   assert.match(source, /function setStatus\(msg,kind=''\)/);
   assert.match(source, /el\.textContent=msg/);
 });
+
+test('bill center does not silently truncate same-day printed bills or archived receipts', () => {
+  const start = source.indexOf('function renderBills(');
+  const end = source.indexOf('function ', start + 10);
+  const fn = source.slice(start, end);
+  assert.match(fn, /const pr=live\.filter\(b=>b\.status==='printed'\)/);
+  assert.match(fn, /const old=data\.bills\.filter\(b=>b\.archived\|\|/);
+  assert.doesNotMatch(fn, /const pr=live\.filter\(b=>b\.status==='printed'\)\.slice/);
+  assert.doesNotMatch(fn, /const old=data\.bills\.filter\([\s\S]*?\.slice\(0,100\)/);
+});

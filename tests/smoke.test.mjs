@@ -871,6 +871,21 @@ function makeRenderCashHarness(data) {
   return { renderCash, elements };
 }
 
+test('cash movement list supports legacy createdAt timestamps when at is absent', () => {
+  const data = {
+    sessions: [], archives: {}, sales: [],
+    adjustments: [
+      { id: 'legacy-old', businessDay: '2026-10-21', kind: 'adjustment', amount: -250, createdAt: 4, description: 'Older record' },
+      { id: 'newer', businessDay: '2026-10-21', kind: 'adjustment', amount: 250, at: 8, description: 'Newer record' }
+    ]
+  };
+  const { renderCash, elements } = makeRenderCashHarness(data);
+  renderCash();
+  assert.ok(elements.cashMovements.innerHTML.indexOf('time-8') < elements.cashMovements.innerHTML.indexOf('time-4'), 'movements should sort newest first using either timestamp field');
+  assert.ok(elements.cashMovements.innerHTML.includes('time-4 — Older record'), 'legacy movement should display its createdAt timestamp');
+  assert.ok(!elements.cashMovements.innerHTML.includes('time-undefined'), 'movement dates should not become undefined when createdAt is available');
+});
+
 test('daily cash register totals count session income, extra sales, and adjustments once', () => {
   const data = {
     sessions: [{ id: 'today-session', endedAt: 2, charge: 5000 }],

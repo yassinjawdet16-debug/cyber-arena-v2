@@ -2,9 +2,10 @@ import json
 import os
 import threading
 import unittest
+from types import SimpleNamespace
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 os.environ["BRIDGE_TOKEN"] = "test-secret-long-enough"
 from printer import bridge
@@ -89,7 +90,8 @@ class BridgeTests(unittest.TestCase):
     def test_success_sends_text_to_fixed_thermal_port(self):
         fake_socket = FakePrinterSocket()
         payload = {"text": "CYBER ARENA\\nBill: BILL-2", "billId": "BILL-2", "printerIp": "192.168.1.44", "port": 1234}
-        with patch.object(bridge.socket, "create_connection", return_value=fake_socket) as connect:
+        connect = Mock(return_value=fake_socket)
+        with patch.object(bridge, "socket", SimpleNamespace(create_connection=connect)):
             status, headers, result = self.request(
                 "/print", payload, token=bridge.TOKEN
             )
@@ -103,7 +105,8 @@ class BridgeTests(unittest.TestCase):
 
     def test_public_printer_ip_is_rejected(self):
         payload = {"text": "test receipt", "billId": "BILL-3", "printerIp": "8.8.8.8"}
-        with patch.object(bridge.socket, "create_connection") as connect:
+        connect = Mock()
+        with patch.object(bridge, "socket", SimpleNamespace(create_connection=connect)):
             status, _, result = self.request("/print", payload, token=bridge.TOKEN)
         self.assertEqual(status, 400)
         self.assertFalse(result["accepted"])

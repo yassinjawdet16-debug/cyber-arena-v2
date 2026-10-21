@@ -80,13 +80,15 @@ test('default owner PIN warning is visible until the owner changes the PIN', () 
   assert.match(source, /data\.settings\.pin==='1234'\?'block':'none'/, 'warning must disappear after changing the default PIN');
 });
 
-test('clear history protects data with owner PIN and downloads backup first', () => {
+test('clear history protects data with owner PIN and requires backup-save confirmation', () => {
   const start = source.indexOf('function clearHistoryProtected(');
   const end = source.indexOf('function fullResetProtected(', start);
   assert.ok(start >= 0 && end > start);
   const fn = source.slice(start, end);
   assert.match(fn, /actionPin/);
   assert.match(fn, /backupJSON\(\)/);
+  assert.match(fn, /verify that the JSON backup file was actually saved/i, 'history clearing must warn that a download request is not proof of a saved file');
+  assert.ok(fn.indexOf('backupJSON()') < fn.indexOf('verify that the JSON backup file was actually saved'), 'backup request must precede the extra confirmation');
   assert.match(fn, /if\(!save\(\)\)/);
 });
 

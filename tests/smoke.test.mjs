@@ -198,12 +198,12 @@ test('Clear History archives sessions without deleting sales or bills', () => {
   assert.doesNotMatch(fn, /data\.bills\s*=/);
 });
 
-test('interrupted print jobs return to the unprinted queue on reload', () => {
+test('interrupted print jobs return to the unprinted queue with uncertain status on reload', () => {
   const start = source.indexOf('function normalize(');
   const end = source.indexOf('function save(', start);
   const fn = source.slice(start, end);
   assert.match(fn, /b\.jobStatus==='sending'/);
-  assert.match(fn, /b\.jobStatus='failed'/);
+  assert.match(fn, /b\.jobStatus='uncertain'/);
   assert.match(fn, /b\.status!=='printed'\)b\.status='unprinted'/);
 });
 

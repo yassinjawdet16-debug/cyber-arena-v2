@@ -190,6 +190,11 @@ test('backup restore rejects duplicate IDs and rolls storage back on failure', (
   const fn = source.slice(start, end);
   assert.match(fn, /validateUniqueIds\(imported\.sessions,'session'\)/);
   assert.match(fn, /validateUniqueIds\(imported\.bills,'bill'\)/);
+  assert.match(fn, /Number\(row\.amount\)%250!==0/, 'restored bill totals must use valid 250 IQD increments');
+  assert.match(fn, /Number\(row\.rawCharge\?\?row\.amount\)/, 'restored bill original amount must be validated');
+  assert.match(fn, /Number\(row\.discount\?\?0\)%250!==0/, 'restored bill discounts must use valid 250 IQD increments');
+  assert.match(fn, /!\['session','manual'\]\.includes\(row\.kind\)/, 'unknown bill kinds must be rejected');
+  assert.match(fn, /Number\(row\.rate\)!==DEFAULT_STATIONS\.find\(x=>x\.id===row\.stationId\)\.rate/, 'session bills must match the station hourly rate');
   assert.match(fn, /const previousStorage=localStorage\.getItem\(STORAGE_KEY\)/);
   assert.match(fn, /Previous data was restored where browser storage allowed/);
 });

@@ -822,6 +822,13 @@ test('discount input is clamped and cannot increase or make a charge negative', 
   assert.equal(chargeFor({ rate: 5000 }, 0, 3600000, 'not-a-number').final, 5000);
 });
 
+test('effective discounts remain in 250-IQD increments for restore compatibility', () => {
+  const result = chargeFor({ rate: 3000 }, 0, 1000000, 2000);
+  assert.equal(result.discount % 250, 0);
+  assert.equal(result.discount, 750);
+  assert.equal(result.final, 0);
+});
+
 test('250-IQD rounding handles exact ties and values around the boundary', () => {
   assert.equal(round250(1124), 1000);
   assert.equal(round250(1125), 1250);

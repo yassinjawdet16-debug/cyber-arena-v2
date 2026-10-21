@@ -219,7 +219,7 @@ test('daily archive only archives bills and preserves each bill print state', ()
   assert.doesNotMatch(fn, /data\.bills\s*=\s*\[\]/, 'daily archiving must not clear the bill queue');
   assert.doesNotMatch(fn, /b\.status\s*=\s*['\"]printed['\"]/, 'archiving must never turn an unprinted bill into a printed bill');
   assert.doesNotMatch(fn, /b\.jobStatus\s*=\s*['\"]accepted['\"]/, 'archiving must not fabricate printer bridge acceptance');
-  assert.match(fn, /b\.businessDay=b\.businessDay\|\|businessDayForTimestamp\(b\.createdAt\)/, 'older bills without a business-day field should get a date without being deleted');
+  assert.match(fn, /const day=b\.businessDay\|\|businessDayForTimestamp\(b\.createdAt\);b\.businessDay=day/, 'older bills without a business-day field should get a date without being deleted');
 });
 
 test('manual archive preserves financial records and rolls back on save failure', () => {

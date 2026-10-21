@@ -759,16 +759,15 @@ test('global status messages are announced accessibly and use outcome colors', (
   assert.match(source, /String\(msg\)\.startsWith\('⚠️'\)\|\|String\(msg\)\.startsWith\('🟠'\)\?'gold'/);
 });
 
-test('bill center does not silently truncate same-day printed bills or archived receipts', () => {
+test('bill center does not silently truncate current bills or archived receipts', () => {
   const start = source.indexOf('function renderBills(');
   const end = source.indexOf('function ', start + 10);
   const fn = source.slice(start, end);
   assert.match(fn, /const livePrinted=data\.bills\.filter\(b=>b\.status==='printed'&&!b\.archived&&/);
-  assert.match(fn, /const oldPrinted=data\.bills\.filter\(b=>b\.status==='printed'&&\(b\.archived\|\|/);
-  assert.match(fn, /const un=data\.bills\.filter\(b=>b\.status!=='printed'\)/);
-  assert.doesNotMatch(fn, /livePrinted\.slice\(0,100\)|oldPrinted\.slice\(0,100\)/);
+  assert.match(fn, /const archivedBills=data\.bills\.filter\(b=>b\.archived\|\|/);
+  assert.match(fn, /const un=data\.bills\.filter\(b=>b\.status!=='printed'&&!b\.archived&&/);
+  assert.doesNotMatch(fn, /livePrinted\.slice\(0,100\)|archivedBills\.slice\(0,100\)/);
 });
-
 test('CSV exports quote cells and neutralize spreadsheet formulas in user-controlled text', () => {
   const start = source.indexOf('function csvCell(');
   const end = source.indexOf('function ', start + 10);

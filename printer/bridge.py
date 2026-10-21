@@ -37,12 +37,14 @@ class Handler(BaseHTTPRequestHandler):
         # Never log authorization headers or receipt content.
         super().log_message(fmt, *args)
 
-    def _send_json(self, status: int, payload: dict) -> None:
+    def _send_json(self, status: int, payload: dict, extra_headers=None) -> None:
         body = json_bytes(payload)
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        for key, value in (extra_headers or {}).items():
+            self.send_header(key, value)
         self._cors_headers()
         self.end_headers()
         self.wfile.write(body)
@@ -72,8 +74,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(200, {"ok": True, "service": "Cyber Arena print bridge"})
             return
         if path == "/print":
-            self.send_header("Allow", "POST, OPTIONS")
-            self._send_json(405, {"accepted": False, "message": "Use POST for printing."})
+            self._send_json(405, {"accepted": False, "message": "Use POST for printing."}, {"Allow": "POST, OPTIONS"})
             return
         self._send_json(404, {"accepted": False, "message": "Not found."})
 

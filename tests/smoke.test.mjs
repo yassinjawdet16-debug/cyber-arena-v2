@@ -943,7 +943,7 @@ test('backup restore verifies session bill amount, duration, and discount agains
   assert.match(fn, /Number\(row\.amount\)!==Number\(restoredSessionsById\.get\(row\.sessionId\)\.charge\)/, 'bill amount must match the source session charge');
   assert.match(fn, /Number\(row\.minutes\)!==Number\(restoredSessionsById\.get\(row\.sessionId\)\.minutes\)/, 'bill duration must match the source session');
   assert.match(fn, /Number\(row\.discount\?\?0\)!==Number\(restoredSessionsById\.get\(row\.sessionId\)\.discount\?\?0\)/, 'bill discount must match the source session');
-  assert.match(fn, /typeof row\.sessionId!=='string'\|\|!restoredSessionsById\.has\(row\.sessionId\)/, 'session bills must link to either current or archived restored sessions');
+  assert.match(fn, /typeof row\.sessionId!=='string'\|\|!sessionIds\\.has\(row\.sessionId\)/, 'session bills must link to a known current or archived session ID');
 });
 
 

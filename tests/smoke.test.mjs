@@ -886,3 +886,13 @@ test('backup restore verifies session bill amount, duration, and discount agains
   assert.match(fn, /Number\(row\.minutes\)!==Number\(restoredSessionsById\.get\(row\.sessionId\)\.minutes\)/, 'bill duration must match the source session');
   assert.match(fn, /Number\(row\.discount\?\?0\)!==Number\(restoredSessionsById\.get\(row\.sessionId\)\.discount\?\?0\)/, 'bill discount must match the source session');
 });
+
+
+test('backup restore rejects duplicate cash movement IDs', () => {
+  const start = source.indexOf('function restoreJSON()');
+  const end = source.indexOf('function csvCell(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /const adjustmentIds=new Set\(\);for\(const row of imported\.adjustments\)/);
+  assert.match(fn, /adjustmentIds\.has\(row\.id\)/);
+  assert.match(fn, /throw Error\('Backup contains an invalid or duplicate cash movement'\);adjustmentIds\.add\(row\.id\)/);
+});

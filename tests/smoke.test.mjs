@@ -210,6 +210,18 @@ test('daily archive preserves active sessions, sales, cash movements, and unprin
   assert.match(fn, /if\(!save\(\)\)\{data=JSON\.parse\(previousData\)/, 'failed archive saves must restore the original data');
 });
 
+test('daily archive only archives bills and preserves each bill print state', () => {
+  const start = source.indexOf('function archiveEligible(');
+  const end = source.indexOf('function manualArchive(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /for\(const b of data\.bills\)/, 'archiving must iterate over existing bills rather than replace the bill list');
+  assert.match(fn, /b\.archived=true/, 'eligible bills should be marked archived');
+  assert.doesNotMatch(fn, /data\.bills\s*=\s*\[\]/, 'daily archiving must not clear the bill queue');
+  assert.doesNotMatch(fn, /b\.status\s*=\s*['\"]printed['\"]/, 'archiving must never turn an unprinted bill into a printed bill');
+  assert.doesNotMatch(fn, /b\.jobStatus\s*=\s*['\"]accepted['\"]/, 'archiving must not fabricate printer bridge acceptance');
+  assert.match(fn, /b\.businessDay=b\.businessDay\|\|businessDayForTimestamp\(b\.createdAt\)/, 'older bills without a business-day field should get a date without being deleted');
+});
+
 test('interrupted print jobs return to the unprinted queue with uncertain status on reload', () => {
   const start = source.indexOf('function normalize(');
   const end = source.indexOf('function save(', start);

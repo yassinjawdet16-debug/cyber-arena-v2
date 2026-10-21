@@ -441,3 +441,9 @@ test('timed session controls reject zero, negative, and fractional durations', (
   assert.match(fn, /Number\.isSafeInteger\(Number\(durationMinutes\)\)/);
   assert.match(fn, /endsAt:duration\?now\+duration\*60000:null/);
 });
+
+test('global status messages are announced accessibly', () => {
+  assert.match(html, /id="globalStatus"[^>]*role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/);
+  assert.match(source, /function setStatus\(msg,kind=''\)/);
+  assert.match(source, /el\.textContent=msg/);
+});

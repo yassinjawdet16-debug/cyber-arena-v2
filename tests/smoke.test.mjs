@@ -340,7 +340,7 @@ test('daily archive rolls back all changes when storage save fails', () => {
   assert.equal(JSON.stringify(harness.getData()), before);
 });
 
-function makePrintBillHarness({ bridgeResponse, bridgeError, saveResults = [true, true], initialStatus = 'unprinted' }) {
+function makePrintBillHarness({ bridgeResponse, bridgeError, saveResults = [true, true], initialStatus = 'unprinted', initialJobStatus = 'not-sent', confirmResult = false }) {
   const start = source.indexOf('async function printBill(');
   const end = source.indexOf('function reprintBill(', start);
   assert.ok(start >= 0 && end > start, 'printBill function must exist');
@@ -348,7 +348,7 @@ function makePrintBillHarness({ bridgeResponse, bridgeError, saveResults = [true
   const bill = {
     id: 'bill-test-1',
     status: initialStatus,
-    jobStatus: 'not-sent',
+    jobStatus: initialJobStatus,
     amount: 5000,
     stationId: 'PS5-02'
   };
@@ -364,7 +364,7 @@ function makePrintBillHarness({ bridgeResponse, bridgeError, saveResults = [true
   const printBill = new Function(
     'data', 'resolveBridgeUrl', 'save', 'renderBills', 'setStatus', 'fetch', 'billText',
     'AbortController', 'setTimeout', 'clearTimeout', 'Date', 'renderAll', 'document',
-    'window', 'escapeHTML',
+    'window', 'escapeHTML', 'confirm',
     printSource + '; return printBill;'
   )(
     data,
@@ -381,7 +381,8 @@ function makePrintBillHarness({ bridgeResponse, bridgeError, saveResults = [true
     () => renderCalls.push('all'),
     document,
     { print() {} },
-    (value) => String(value)
+    (value) => String(value),
+    () => confirmResult
   );
   return { printBill, bill, data, statuses, renderCalls };
 }
@@ -394,6 +395,23 @@ test('accepted printer bridge job is marked printed only after save succeeds', a
   assert.ok(Number.isFinite(h.bill.printedAt));
   assert.match(h.statuses.at(-1), /accepted the job and its status was saved/);
   assert.match(h.statuses.at(-1), /Physical paper output is not independently verified/);
+});
+
+test('ambiguous printer network failures mark a bill uncertain and warn against blind retry', async () => {
+  const h = makePrintBillHarness({ bridgeError: new TypeError('Failed to fetch'), saveResults: [true, true] });
+  await h.printBill(h.bill.id);
+  assert.equal(h.bill.status, 'unprinted');
+  assert.equal(h.bill.jobStatus, 'uncertain');
+  assert.match(h.statuses.at(-1), /Print result is uncertain/);
+  assert.match(h.statuses.at(-1), /duplicate receipt is possible/);
+});
+
+test('uncertain print retry requires explicit confirmation', async () => {
+  const h = makePrintBillHarness({ bridgeResponse: { accepted: true }, initialJobStatus: 'uncertain', confirmResult: false });
+  await h.printBill(h.bill.id);
+  assert.equal(h.bill.status, 'unprinted');
+  assert.equal(h.bill.jobStatus, 'uncertain');
+  assert.match(h.statuses.at(-1), /Check the printer before retrying/);
 });
 
 test('printer bridge rejection leaves the bill unprinted and reports failure', async () => {

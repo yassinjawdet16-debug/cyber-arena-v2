@@ -694,3 +694,79 @@ test('250-IQD rounding handles exact ties and values around the boundary', () =>
   assert.equal(round250(1375), 1500);
   assert.equal(round250(0), 0);
 });
+
+
+function makeAddSaleHarness({ saveResult = true, name = 'Water', qty = '2', price = '750' } = {}) {
+  const start = source.indexOf('function addSale()');
+  const end = source.indexOf('function openCashAdjustment(', start);
+  assert.ok(start >= 0 && end > start, 'addSale function must exist');
+  const saleSource = source.slice(start, end);
+  const elements = {
+    saleName: { value: name },
+    saleQty: { value: qty },
+    salePrice: { value: price }
+  };
+  const data = { sales: [], adjustments: [] };
+  const statuses = [];
+  const calls = [];
+  let uidCounter = 0;
+  const addSale = new Function(
+    'initialData', 'elements', 'helpers', 'Date', 'JSON',
+    `let data=initialData;
+    const document={getElementById:(id)=>elements[id]};
+    const {baghdadDayStart,localDateKey,uid,save,renderAll,setStatus}=helpers;
+    ${saleSource}
+    return {addSale,getData:()=>data};`
+  )(
+    data,
+    elements,
+    {
+      baghdadDayStart: () => '2026-10-21',
+      localDateKey: () => '2026-10-21',
+      uid: (prefix) => prefix + '-' + (++uidCounter),
+      save: () => saveResult,
+      renderAll: () => calls.push('renderAll'),
+      setStatus: (message) => statuses.push(message)
+    },
+    Date,
+    JSON
+  );
+  return { ...addSale, elements, statuses, calls };
+}
+
+test('extra sale records the sale and matching cash movement exactly once', () => {
+  const h = makeAddSaleHarness();
+  h.addSale();
+  const data = h.getData();
+  assert.equal(data.sales.length, 1);
+  assert.deepEqual(
+    { name: data.sales[0].name, qty: data.sales[0].qty, unitPrice: data.sales[0].unitPrice, total: data.sales[0].total },
+    { name: 'Water', qty: 2, unitPrice: 750, total: 1500 }
+  );
+  assert.equal(data.sales[0].businessDay, '2026-10-21');
+  assert.equal(data.adjustments.length, 1);
+  assert.equal(data.adjustments[0].kind, 'sale');
+  assert.equal(data.adjustments[0].amount, 1500);
+  assert.match(data.adjustments[0].description, /2 × Water/);
+  assert.equal(h.elements.saleName.value, '');
+  assert.equal(h.elements.saleQty.value, '1');
+  assert.equal(h.elements.salePrice.value, '');
+});
+
+test('invalid extra-sale quantity or price creates no financial records', () => {
+  for (const options of [{ qty: '0' }, { qty: '1.5' }, { price: '-250' }, { price: '12.5' }]) {
+    const h = makeAddSaleHarness(options);
+    h.addSale();
+    assert.equal(h.getData().sales.length, 0);
+    assert.equal(h.getData().adjustments.length, 0);
+    assert.match(h.statuses.at(-1), /Quantity must be|Unit price must be/);
+  }
+});
+
+test('failed save while adding an extra sale rolls back both sale and cash movement', () => {
+  const h = makeAddSaleHarness({ saveResult: false });
+  h.addSale();
+  assert.equal(h.getData().sales.length, 0);
+  assert.equal(h.getData().adjustments.length, 0);
+  assert.match(h.statuses.at(-1), /Sale was not saved/);
+});

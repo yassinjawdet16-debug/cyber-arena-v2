@@ -111,6 +111,13 @@ test('print bridge URLs normalize a base address to the /print endpoint', () => 
   assert.throws(() => resolveBridgeUrl('http://192.168.1.122:8787/health'), /end in \/print/);
 });
 
+
+test('confirmed Xprinter address is the app default and print fallback', () => {
+  assert.match(source, /printerIp:'192\\.168\\.1\\.41'/);
+  assert.match(source, /data\.settings\.printerIp\|\|'192\.168\.1\.41'/);
+  assert.match(html, /placeholder="192\.168\.1\.41"/);
+});
+
 test('backup and CSV export functions are present', () => {
   for (const name of ['backupJSON', 'restoreJSON', 'exportCSV', 'exportSalesCSV', 'exportBillsCSV', 'exportCashCSV']) {
     assert.ok(source.includes('function ' + name + '('), name + ' should exist');

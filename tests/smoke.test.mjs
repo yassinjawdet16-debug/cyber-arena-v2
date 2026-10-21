@@ -522,10 +522,10 @@ test('bill center does not silently truncate same-day printed bills or archived 
   const start = source.indexOf('function renderBills(');
   const end = source.indexOf('function ', start + 10);
   const fn = source.slice(start, end);
-  assert.match(fn, /const pr=live\.filter\(b=>b\.status==='printed'\)/);
-  assert.match(fn, /const old=data\.bills\.filter\(b=>b\.archived\|\|/);
-  assert.doesNotMatch(fn, /const pr=live\.filter\(b=>b\.status==='printed'\)\.slice/);
-  assert.doesNotMatch(fn, /const old=data\.bills\.filter\([\s\S]*?\.slice\(0,100\)/);
+  assert.match(fn, /const livePrinted=data\.bills\.filter\(b=>b\.status==='printed'&&!b\.archived&&/);
+  assert.match(fn, /const oldPrinted=data\.bills\.filter\(b=>b\.status==='printed'&&\(b\.archived\|\|/);
+  assert.match(fn, /const un=data\.bills\.filter\(b=>b\.status!=='printed'\)/);
+  assert.doesNotMatch(fn, /livePrinted\.slice\(0,100\)|oldPrinted\.slice\(0,100\)/);
 });
 
 test('CSV exports quote cells and neutralize spreadsheet formulas in user-controlled text', () => {

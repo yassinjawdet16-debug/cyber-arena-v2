@@ -221,5 +221,51 @@ class BridgeTests(unittest.TestCase):
                 connect.assert_not_called()
 
 
+    def test_printer_socket_failure_returns_not_accepted(self):
+        payload = {
+            "text": "test receipt",
+            "billId": "BILL-OFFLINE",
+            "printerIp": "192.168.1.41",
+        }
+        connect = Mock(side_effect=OSError("connection refused"))
+        with patch.object(bridge, "socket", SimpleNamespace(create_connection=connect)):
+            status, _, result = self.request(
+                "/print", payload, token=bridge.TOKEN
+            )
+        self.assertEqual(status, 502)
+        self.assertFalse(result["accepted"])
+        self.assertEqual(result["billId"] if "billId" in result else None, None)
+        connect.assert_called_once_with(("192.168.1.41", 9100), timeout=4)
+
+    def test_options_preflight_only_allows_configured_origin(self):
+        allowed = Request(
+            self.base + "/print",
+            headers={
+                "Origin": "https://yassinjawdet16-debug.github.io",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "authorization,content-type",
+            },
+            method="OPTIONS",
+        )
+        with urlopen(allowed, timeout=3) as response:
+            self.assertEqual(response.status, 204)
+            self.assertEqual(
+                response.headers.get("Access-Control-Allow-Origin"),
+                "https://yassinjawdet16-debug.github.io",
+            )
+            self.assertIn("POST", response.headers.get("Access-Control-Allow-Methods", ""))
+
+        denied = Request(
+            self.base + "/print",
+            headers={"Origin": "https://evil.example"},
+            method="OPTIONS",
+        )
+        with self.assertRaises(HTTPError) as caught:
+            urlopen(denied, timeout=3)
+        self.assertEqual(caught.exception.code, 403)
+        payload = json.loads(caught.exception.read().decode("utf-8"))
+        self.assertFalse(payload["accepted"])
+
+
 if __name__ == "__main__":
     unittest.main()

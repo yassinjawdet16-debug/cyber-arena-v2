@@ -903,6 +903,11 @@ test('backup restore rejects duplicate cash movement IDs', () => {
   assert.match(fn, /Backup cash movement does not match a unique source session/, 'session income must match exactly one completed or archived source session');
   assert.match(fn, /session\.stationId===match\[1\]/, 'session cash movements must link by station ID, not confuse station IDs with session IDs');
   assert.match(fn, /Backup cash movement does not match a unique source sale/, 'sale income must match one source sale');
+  assert.match(fn, /Number\(movement\.amount\)===Number\(session\.charge\)/, 'session cash movement amount must equal the session charge');
+  assert.match(fn, /Number\(movement\.at\?\?movement\.createdAt\)===Number\(session\.endedAt\)/, 'session cash movement timestamp must equal completion time');
+  assert.match(fn, /matches\.length!==1/, 'source linkage must be unique rather than ambiguous');
+  assert.match(fn, /sale\.createdAt===saleTime/, 'sale cash movement must match the sale timestamp');
+  assert.match(fn, /movement\.description===`\$\{sale\.qty\} × \$\{sale\.name\}`/, 'sale cash movement must match the source sale description');
 });
 
 

@@ -263,6 +263,9 @@ test('backup restore rejects duplicate IDs and rolls storage back on failure', (
   assert.match(fn, /Number\(a\.discount\?\?0\)%250!==0/, 'active session discounts must use 250 IQD increments');
   assert.match(fn, /const previousStorage=localStorage\.getItem\(STORAGE_KEY\)/);
   assert.match(fn, /Previous data was restored where browser storage allowed/);
+  assert.ok(fn.indexOf('data=previousData') < fn.indexOf('localStorage.removeItem(STORAGE_KEY)'), 'in-memory data must be restored before attempting storage rollback');
+  assert.ok(fn.indexOf('localStorage.setItem(STORAGE_KEY,previousStorage)') < fn.indexOf("throw Error('Restore could not be saved."), 'storage rollback must be attempted before reporting restore failure');
+  assert.ok(fn.indexOf('backupJSON();try{data=imported') >= 0, 'the existing data backup must be prepared before imported data is committed');
 });
 
 test('daily archive function moves old sessions and bills while preserving active sessions and financial records', () => {

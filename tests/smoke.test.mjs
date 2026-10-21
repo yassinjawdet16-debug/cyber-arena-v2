@@ -482,13 +482,13 @@ test('sales table does not silently hide older extra-sale records', () => {
 });
 
 test('static HTML event handlers reference existing app functions', () => {
-  const declared = new Set([...source.matchAll(/(?:async\\s+)?function\\s+([A-Za-z_$][\\w$]*)\\s*\\(/g)].map(m => m[1]));
-  const handlerAttrs = [...html.matchAll(/\\son(?:click|change|input|submit|keydown|keyup|focus|blur)\\s*=\\s*"([^"]*)"/g)].map(m => m[1]);
+  const declared = new Set([...source.matchAll(/(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m => m[1]));
+  const handlerAttrs = [...html.matchAll(/\son(?:click|change|input|submit|keydown|keyup|focus|blur)\s*=\s*"([^"]*)"/g)].map(m => m[1]);
   assert.ok(handlerAttrs.length > 0, 'expected inline UI handlers to be checked');
   const builtins = new Set(['if','confirm','alert','prompt','setTimeout','clearTimeout','setInterval','clearInterval','Number','String','Date','Math','JSON','open','print','focus','click','remove','add','set','stopPropagation','preventDefault','closest','querySelector','querySelectorAll','getElementById']);
   const missing = new Set();
   for (const handler of handlerAttrs) {
-    for (const match of handler.matchAll(/\\b([A-Za-z_$][\\w$]*)\\s*\\(/g)) {
+    for (const match of handler.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(/g)) {
       const name = match[1];
       if (!declared.has(name) && !builtins.has(name) && !['event','window','document','this'].includes(name)) missing.add(name);
     }

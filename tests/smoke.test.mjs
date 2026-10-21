@@ -88,7 +88,7 @@ test('printing requires bridge acceptance before marking a bill printed', () => 
   assert.match(source, /text:billText\(b\),billId:b\.id/);
 });
 
-test('print bridge URLs normalize a base address to the /print endpoint', () => {
+test('print failure persistence is checked so stale sending state is not hidden', () => {\n  const start = source.indexOf('async function printBill(');\n  const end = source.indexOf('function ', start + 10);\n  assert.ok(start >= 0 && end > start, 'print handler must exist');\n  const fn = source.slice(start, end);\n  assert.match(fn, /b\\.jobStatus='failed';const failureSaved=save\\(\\);renderBills\\(\\);/);\n  assert.match(fn, /if\\(!failureSaved\\)\\{b\\.jobStatus=previousJobStatus;renderBills\\(\\);setStatus\\('🔴 Printing failed, but browser storage could not save the failure status/);\n  assert.match(fn, /This bill may still show as sending after reload/);\n});\n\ntest('print bridge URLs normalize a base address to the /print endpoint', () => {
   const start = source.indexOf('function resolveBridgeUrl(');
   const end = source.indexOf('async function printBill(', start);
   assert.ok(start >= 0 && end > start, 'bridge URL resolver must exist');

@@ -149,6 +149,15 @@ test('confirmed Xprinter address is the app default and print fallback', () => {
   assert.ok(html.includes('placeholder="192.168.1.41"'));
 });
 
+test('cash CSV exports use the same Iraq business-day fallback as the cash register', () => {
+  const start = source.indexOf('function exportCashCSV()');
+  const end = source.indexOf('function printDailyReport(', start);
+  assert.ok(start >= 0 && end > start, 'cash CSV and daily report functions must exist');
+  const fn = source.slice(start, end);
+  assert.match(fn, /cashMovementBusinessDay\(a\)/,
+    'legacy movements should export the same derived business day shown in the register');
+});
+
 test('backup and CSV export functions are present', () => {
   for (const name of ['backupJSON', 'restoreJSON', 'exportCSV', 'exportSalesCSV', 'exportBillsCSV', 'exportCashCSV']) {
     assert.ok(source.includes('function ' + name + '('), name + ' should exist');

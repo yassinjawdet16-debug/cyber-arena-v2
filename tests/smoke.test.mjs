@@ -210,6 +210,20 @@ test('daily archive leaves active sessions and financial source records intact',
   assert.match(fn, /b\.archived=true/, 'old bills should be marked archived');
 });
 
+test('full reset requires owner PIN, backup-save confirmation, and typed RESET', () => {
+  const start = source.indexOf('function fullResetProtected(');
+  const end = source.indexOf('function addSale(', start);
+  assert.ok(start >= 0 && end > start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /actionPin/);
+  assert.match(fn, /resetWord/);
+  assert.match(fn, /backupJSON\(\)/);
+  assert.match(fn, /verify that the JSON backup file was actually saved/i, 'full reset must not treat a download request as proof of a saved backup');
+  assert.ok(fn.indexOf('backupJSON()') < fn.indexOf('verify that the JSON backup file was actually saved'), 'backup request must precede the extra confirmation');
+  assert.ok(fn.indexOf('verify that the JSON backup file was actually saved') < fn.indexOf('data=defaultData()'), 'reset must not happen before backup-save confirmation');
+  assert.match(fn, /if\(!save\(\)\)/);
+});
+
 test('Clear History archives sessions without deleting sales or bills', () => {
   const start = source.indexOf('function clearHistoryProtected(');
   const end = source.indexOf('function fullResetProtected(', start);

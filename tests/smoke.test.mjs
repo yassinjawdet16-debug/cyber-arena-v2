@@ -898,6 +898,8 @@ test('backup restore rejects duplicate cash movement IDs', () => {
   assert.match(fn, /!\['session','sale','adjustment'\]\.includes\(row\.kind\)/, 'unknown cash movement types must be rejected');
   assert.match(fn, /!Number\.isSafeInteger\(Number\(row\.amount\)\)/, 'cash movement amounts must be whole IQD values');
   assert.match(fn, /row\.kind!=='adjustment'&&Number\(row\.amount\)<0/, 'session and sale movements cannot be negative');
+  assert.match(fn, /row\.businessDay!==businessDayForTimestamp\(row\.createdAt\)/, 'sale business day must match its timestamp');
+  assert.match(fn, /row\.businessDay!==businessDayForTimestamp\(movementTime\)/, 'cash movement business day must match its timestamp');
 });
 
 

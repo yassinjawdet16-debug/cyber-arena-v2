@@ -113,9 +113,9 @@ test('print bridge URLs normalize a base address to the /print endpoint', () => 
 
 
 test('confirmed Xprinter address is the app default and print fallback', () => {
-  assert.match(source, /printerIp:'192\\.168\\.1\\.41'/);
-  assert.match(source, /data\.settings\.printerIp\|\|'192\.168\.1\.41'/);
-  assert.match(html, /placeholder="192\.168\.1\.41"/);
+  assert.ok(source.includes("printerIp:'192.168.1.41'"));
+  assert.ok(source.includes("data.settings.printerIp||'192.168.1.41'"));
+  assert.ok(html.includes('placeholder="192.168.1.41"'));
 });
 
 test('backup and CSV export functions are present', () => {

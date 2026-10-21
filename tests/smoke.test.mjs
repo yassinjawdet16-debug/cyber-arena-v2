@@ -254,9 +254,9 @@ test('daily archive rolls back all changes when storage save fails', () => {
     adjustments: []
   };
   const before = JSON.stringify(data);
-  const archiveEligible = new Function(
-    'data', 'baghdadDayStart', 'businessDayForTimestamp', 'save', 'renderAll', 'setStatus',
-    archiveSource + '; return archiveEligible;'
+  const harness = new Function(
+    'initialData', 'baghdadDayStart', 'businessDayForTimestamp', 'save', 'renderAll', 'setStatus',
+    'let data=initialData;' + archiveSource + '; return {archiveEligible, getData:()=>data};'
   )(
     data,
     () => '2026-10-21',
@@ -265,6 +265,6 @@ test('daily archive rolls back all changes when storage save fails', () => {
     () => {},
     () => {}
   );
-  assert.equal(archiveEligible(), false);
-  assert.equal(JSON.stringify(data), before);
+  assert.equal(harness.archiveEligible(), false);
+  assert.equal(JSON.stringify(harness.getData()), before);
 });

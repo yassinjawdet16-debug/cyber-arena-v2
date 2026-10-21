@@ -165,6 +165,7 @@ test('restored archived sessions validate dates, rates, duration and charge', ()
   assert.match(source, /businessDayForTimestamp\(row\.endedAt\)!==archiveDay/);
   assert.match(source, /Backup archive contains an invalid session record/);
   assert.match(source, /Backup contains an invalid archived session record/);
+  assert.match(source, /Number\(row\.charge\)%250!==0/, 'archived session charges must follow the 250 IQD rounding rule');
 });
 
 test('history table escapes imported station labels and bill statuses', () => {

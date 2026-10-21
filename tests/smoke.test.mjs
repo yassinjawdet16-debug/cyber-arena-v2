@@ -135,6 +135,19 @@ test('daily archiving moves old sessions and preserves sales and cash records', 
   assert.match(fn, /if\(!save\(\)\)\{data=JSON\.parse\(previousData\)/);
 });
 
+test('daily archive leaves active sessions and financial source records intact', () => {
+  const start = source.indexOf('function archiveEligible(');
+  const end = source.indexOf('function manualArchive(', start);
+  assert.ok(start >= 0 && end > start);
+  const fn = source.slice(start, end);
+  assert.doesNotMatch(fn, /data\.active\s*=/, 'active sessions must keep running through the daily archive');
+  assert.doesNotMatch(fn, /delete\s+data\.active/, 'daily archive must not delete active sessions');
+  assert.doesNotMatch(fn, /data\.sales\s*=/, 'sales history must be retained');
+  assert.doesNotMatch(fn, /data\.adjustments\s*=/, 'cash movements must be retained');
+  assert.doesNotMatch(fn, /data\.bills\s*=\s*\[\]/, 'bills must be archived, not deleted');
+  assert.match(fn, /b\.archived=true/, 'old bills should be marked archived');
+});
+
 test('Clear History archives sessions without deleting sales or bills', () => {
   const start = source.indexOf('function clearHistoryProtected(');
   const end = source.indexOf('function fullResetProtected(', start);

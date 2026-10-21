@@ -669,6 +669,18 @@ test('duplicate session completion is blocked before creating a second bill or c
   assert.match(h.statuses.at(-1), /Duplicate session completion blocked/);
 });
 
+test('session completion blocks reuse of an ID already stored in dated archives', () => {
+  const h = makeFinishSessionHarness();
+  const data = h.getData();
+  data.archives = { '2026-10-20': [{ id: 'session-1', charge: 5000 }] };
+  h.finishSession('PS5-02');
+  assert.ok(data.active['PS5-02']);
+  assert.equal(data.sessions.length, 0);
+  assert.equal(data.bills.length, 0);
+  assert.equal(data.adjustments.length, 0);
+  assert.match(h.statuses.at(-1), /Duplicate session completion blocked/);
+});
+
 test('invalid saved hourly rate blocks session completion without changing records', () => {
   const h = makeFinishSessionHarness();
   const data = h.getData();

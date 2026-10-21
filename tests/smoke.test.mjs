@@ -901,6 +901,7 @@ test('backup restore rejects duplicate cash movement IDs', () => {
   assert.match(fn, /row\.businessDay!==businessDayForTimestamp\(row\.createdAt\)/, 'sale business day must match its timestamp');
   assert.match(fn, /row\.businessDay!==businessDayForTimestamp\(movementTime\)/, 'cash movement business day must match its timestamp');
   assert.match(fn, /Backup cash movement does not match its source session/, 'session income must match a completed or archived session');
+  assert.match(fn, /session\.stationId===match\[1\]/, 'session cash movements must link by station ID, not confuse station IDs with session IDs');
   assert.match(fn, /Backup cash movement does not match a unique source sale/, 'sale income must match one source sale');
 });
 

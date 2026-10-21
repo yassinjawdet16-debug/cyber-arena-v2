@@ -736,7 +736,7 @@ test('extending a timed session resets its one-time expiration alert', () => {
   const start = source.indexOf('function extendSession(');
   const end = source.indexOf('function ', start + 10);
   const fn = source.slice(start, end);
-  assert.match(fn, /window\\._alerted\\)window\\._alerted\\.delete\\(a\\.id\\)/);
+  assert.ok(fn.includes('if(window._alerted)window._alerted.delete(a.id)'), 'extending the timer must clear the old one-time alert flag');
   assert.ok(fn.indexOf('if(window._alerted)window._alerted.delete(a.id)') < fn.lastIndexOf('renderAll()'));
 });
 

@@ -121,7 +121,7 @@ test('backup restore validates imported data before replacing live data or downl
   const start = source.indexOf('function restoreJSON()');
   const end = source.indexOf('function csvCell(', start);
   const fn = source.slice(start, end);
-  const validation = fn.indexOf("throw Error('Backup contains an invalid cash movement')");
+  const validation = fn.indexOf("throw Error('Backup contains an invalid or duplicate cash movement')");
   const snapshot = fn.indexOf('const previousData=data;');
   const backup = fn.indexOf('backupJSON();');
   const replace = fn.indexOf('data=imported;');
@@ -142,7 +142,7 @@ test('backup restore reports when the selected file cannot be read', () => {
 test('backup restore rejects unsafe sale totals and cash movement amounts', () => {
   assert.match(source, /Number\.isSafeInteger\(Number\(row\.qty\)\*Number\(row\.unitPrice\)\)/);
   assert.match(source, /Number\.isSafeInteger\(Number\(row\.total\)\)/);
-  assert.match(source, /Number\.isSafeInteger\(Number\(row\.amount\)\).*Backup contains an invalid cash movement/);
+  assert.match(source, /Number\.isSafeInteger\(Number\(row\.amount\)\).*Backup contains an invalid or duplicate cash movement/);
   assert.match(source, /typeof row\.name!=='string'\|\|!row\.name\.trim\(\)/);
 });
 

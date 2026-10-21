@@ -401,6 +401,34 @@ test('daily archive is idempotent when checked repeatedly on the same business d
   assert.equal(data.adjustments[0].amount, -250);
 });
 
+test('daily archive catches eligible records added after the first same-day check', () => {
+  const start = source.indexOf('function archiveEligible(');
+  const end = source.indexOf('function manualArchive(', start);
+  const archiveSource = source.slice(start, end);
+  const data = {
+    lastArchiveDay: '2026-10-21',
+    sessions: [{ id: 'late-old-session', stationId: 'PS5-02', endedAt: 1 }],
+    archives: {},
+    bills: [{ id: 'late-old-bill', createdAt: 1, businessDay: '2026-10-20', status: 'unprinted' }],
+    active: { 'PS4-09': { id: 'active-session' } },
+    sales: [{ id: 'sale', total: 1000 }],
+    adjustments: [{ id: 'cash', amount: -250 }]
+  };
+  let saves = 0;
+  const archiveEligible = new Function(
+    'data', 'baghdadDayStart', 'businessDayForTimestamp', 'save', 'renderAll', 'setStatus',
+    archiveSource + '; return archiveEligible;'
+  )(data, () => '2026-10-21', () => '2026-10-20', () => { saves++; return true; }, () => {}, () => {});
+  assert.equal(archiveEligible(), true, 'eligible records must be archived even if this business day was already checked');
+  assert.deepEqual(data.sessions, []);
+  assert.deepEqual(data.archives['2026-10-20'].map(s => s.id), ['late-old-session']);
+  assert.equal(data.bills[0].archived, true);
+  assert.equal(saves, 1);
+  assert.ok(data.active['PS4-09'], 'active sessions remain untouched');
+  assert.equal(data.sales[0].total, 1000);
+  assert.equal(data.adjustments[0].amount, -250);
+});
+
 test('daily archive rolls back all changes when storage save fails', () => {
   const start = source.indexOf('function archiveEligible(');
   const end = source.indexOf('function manualArchive(', start);

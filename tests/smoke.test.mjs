@@ -1026,6 +1026,15 @@ test('cash movement list supports legacy createdAt timestamps when at is absent'
   assert.ok(!elements.cashMovements.innerHTML.includes('time-undefined'), 'movement dates should not become undefined when createdAt is available');
 });
 
+test('daily printed report uses the same legacy cash movement business-day grouping', () => {
+  const start = source.indexOf('function printDailyReport()');
+  const end = source.indexOf('function openForm(', start);
+  assert.ok(start >= 0 && end > start, 'printDailyReport function must exist');
+  const reportSource = source.slice(start, end);
+  assert.match(reportSource, /movements=data\.adjustments\.filter\(a=>cashMovementBusinessDay\(a\)===d\)/,
+    'daily report should share the cash register business-day fallback for legacy movements');
+});
+
 test('daily cash register groups legacy cash movements by timestamp when businessDay is missing', () => {
   const data = {
     sessions: [], archives: {}, sales: [],

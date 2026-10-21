@@ -147,5 +147,79 @@ class BridgeTests(unittest.TestCase):
                 connect.assert_not_called()
 
 
+    def test_non_object_json_is_rejected_before_printer_connection(self):
+        connect = Mock()
+        with patch.object(bridge, "socket", SimpleNamespace(create_connection=connect)):
+            status, _, result = self.request(
+                "/print", ["not", "an", "object"], token=bridge.TOKEN
+            )
+        self.assertEqual(status, 400)
+        self.assertFalse(result["accepted"])
+        connect.assert_not_called()
+
+    def test_empty_receipt_text_is_rejected_before_printer_connection(self):
+        for receipt_text in ("", "   ", "\\x00\\x01"):
+            with self.subTest(receipt_text=repr(receipt_text)):
+                payload = {
+                    "text": receipt_text,
+                    "billId": "BILL-EMPTY",
+                    "printerIp": "192.168.1.44",
+                }
+                connect = Mock()
+                with patch.object(bridge, "socket", SimpleNamespace(create_connection=connect)):
+                    status, _, result = self.request(
+                        "/print", payload, token=bridge.TOKEN
+                    )
+                self.assertEqual(status, 400)
+                self.assertFalse(result["accepted"])
+                connect.assert_not_called()
+
+    def test_invalid_content_type_is_rejected_before_printer_connection(self):
+        body = json.dumps({
+            "text": "test receipt",
+            "billId": "BILL-CONTENT-TYPE",
+            "printerIp": "192.168.1.44",
+        }).encode("utf-8")
+        req = Request(
+            self.base + "/print",
+            data=body,
+            headers={
+                "Authorization": "Bearer " + bridge.TOKEN,
+                "Origin": "https://yassinjawdet16-debug.github.io",
+                "Content-Type": "text/plain",
+            },
+            method="POST",
+        )
+        connect = Mock()
+        with patch.object(bridge, "socket", SimpleNamespace(create_connection=connect)):
+            try:
+                with urlopen(req, timeout=3) as response:
+                    status = response.status
+                    result = json.loads(response.read().decode("utf-8"))
+            except HTTPError as exc:
+                status = exc.code
+                result = json.loads(exc.read().decode("utf-8"))
+        self.assertEqual(status, 415)
+        self.assertFalse(result["accepted"])
+        connect.assert_not_called()
+
+    def test_invalid_bill_id_is_rejected_before_printer_connection(self):
+        for bill_id in ("", " " , "B" * 101):
+            with self.subTest(bill_id_length=len(bill_id)):
+                payload = {
+                    "text": "test receipt",
+                    "billId": bill_id,
+                    "printerIp": "192.168.1.44",
+                }
+                connect = Mock()
+                with patch.object(bridge, "socket", SimpleNamespace(create_connection=connect)):
+                    status, _, result = self.request(
+                        "/print", payload, token=bridge.TOKEN
+                    )
+                self.assertEqual(status, 400)
+                self.assertFalse(result["accepted"])
+                connect.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -647,3 +647,25 @@ test('bill cards HTML-escape bill IDs and station labels before rendering', () =
   assert.match(fn, /exportSingleBill\(\$\{inlineArg\(b\.id\)\}\)/);
   assert.doesNotMatch(fn, /(?:printBill|openBillPreview|reprintBill|exportSingleBill)\('\$\{b\.id\}'\)/, 'raw imported IDs must never be interpolated into JavaScript handlers');
 });
+
+
+test('discount is subtracted before final 250-IQD rounding', () => {
+  const result = chargeFor({ rate: 5000 }, 0, 3600000, 250);
+  assert.equal(result.raw, 5000);
+  assert.equal(result.discount, 250);
+  assert.equal(result.final, 4750);
+});
+
+test('discount input is clamped and cannot increase or make a charge negative', () => {
+  assert.equal(chargeFor({ rate: 5000 }, 0, 3600000, -300).final, 5000);
+  assert.equal(chargeFor({ rate: 5000 }, 0, 3600000, 9000).final, 0);
+  assert.equal(chargeFor({ rate: 5000 }, 0, 3600000, 'not-a-number').final, 5000);
+});
+
+test('250-IQD rounding handles exact ties and values around the boundary', () => {
+  assert.equal(round250(1124), 1000);
+  assert.equal(round250(1125), 1250);
+  assert.equal(round250(1374), 1250);
+  assert.equal(round250(1375), 1500);
+  assert.equal(round250(0), 0);
+});

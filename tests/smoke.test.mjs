@@ -521,6 +521,31 @@ test('finishing a session creates exactly one bill and a cash movement', () => {
   assert.ok(h.calls.includes('preview:' + data.bills[0].id));
 });
 
+
+test('duplicate session completion is blocked before creating a second bill or cash movement', () => {
+  const h = makeFinishSessionHarness();
+  const data = h.getData();
+  data.sessions.push({ id: 'session-1', charge: 5000 });
+  h.finishSession('PS5-02');
+  assert.ok(data.active['PS5-02'], 'active session should remain available for manual review');
+  assert.equal(data.sessions.length, 1);
+  assert.equal(data.bills.length, 0);
+  assert.equal(data.adjustments.length, 0);
+  assert.match(h.statuses.at(-1), /Duplicate session completion blocked/);
+});
+
+test('invalid saved hourly rate blocks session completion without changing records', () => {
+  const h = makeFinishSessionHarness();
+  const data = h.getData();
+  data.active['PS5-02'].rate = 3000;
+  h.finishSession('PS5-02');
+  assert.ok(data.active['PS5-02']);
+  assert.equal(data.sessions.length, 0);
+  assert.equal(data.bills.length, 0);
+  assert.equal(data.adjustments.length, 0);
+  assert.match(h.statuses.at(-1), /hourly rate is invalid/);
+});
+
 test('failed save while finishing a session restores the active session and creates no records', () => {
   const h = makeFinishSessionHarness({ saveResult: false });
   h.finishSession('PS5-02');

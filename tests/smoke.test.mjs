@@ -117,6 +117,14 @@ test('backup and CSV export functions are present', () => {
   }
 });
 
+test('backup restore reports when the selected file cannot be read', () => {
+  const start = source.indexOf('function restoreJSON()');
+  const end = source.indexOf('function csvCell(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /reader\.onerror=\(\)=>setStatus\('🔴 Could not read the backup file/);
+  assert.match(fn, /reader\.readAsText\(f\)/);
+});
+
 test('backup restore rejects unsafe sale totals and cash movement amounts', () => {
   assert.match(source, /Number\.isSafeInteger\(Number\(row\.qty\)\*Number\(row\.unitPrice\)\)/);
   assert.match(source, /Number\.isSafeInteger\(Number\(row\.total\)\)/);

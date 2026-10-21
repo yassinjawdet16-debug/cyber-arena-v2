@@ -857,3 +857,21 @@ test('backup restore rejects session bills that do not link to a restored sessio
   assert.match(fn, /row\.kind==='session'&&\(!stationIds\.has\(row\.stationId\)\|\|typeof row\.sessionId!=='string'\|\|!sessionIds\.has\(row\.sessionId\)/);
   assert.match(fn, /Backup contains an invalid bill record/);
 });
+
+
+test('backup restore rejects multiple session bills linked to the same session', () => {
+  const start = source.indexOf('function restoreJSON()');
+  const end = source.indexOf('function csvCell(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /const billedSessionIds=new Set\(\);for\(const row of imported\.bills\)/);
+  assert.match(fn, /if\(billedSessionIds\.has\(row\.sessionId\)\)throw Error\('Backup contains duplicate bills for session '\+row\.sessionId\)/);
+  assert.match(fn, /billedSessionIds\.add\(row\.sessionId\)/);
+});
+
+test('backup restore duplicate-session-bill protection applies only to session bills', () => {
+  const start = source.indexOf('function restoreJSON()');
+  const end = source.indexOf('function csvCell(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /if\(row\.kind==='session'\)\{if\(billedSessionIds\.has/);
+  assert.ok(fn.indexOf("if(row.kind==='session'){if(billedSessionIds.has") < fn.indexOf("Backup contains duplicate bills for session"));
+});

@@ -1124,3 +1124,12 @@ test('backup restore rejects record ID collisions across different record types'
   assert.match(fn, /registerGlobalId\(row\.id,'cash movement'\)/);
   assert.match(fn, /registerGlobalId\(row\.id,'archived session'\)/);
 });
+
+
+test('corrupt local storage blocks saves instead of overwriting potentially recoverable business data', () => {
+  assert.match(source, /let data,storageLoadError=null;/);
+  assert.match(source, /storageLoadError=String\(e&&e\.message\|\|e\);data=defaultData\(\)/);
+  assert.match(source, /if\(storageLoadError\)\{setStatus\('🔴 Saved data could not be read, so saving is blocked to protect it\.'/);
+  assert.match(source, /storageLoadError=null;renderAll\(\);setStatus\('🟢 Backup restored after validation/);
+  assert.match(source, /if\(storageLoadError\)setStatus\('🔴 Saved data could not be read/);
+});

@@ -875,3 +875,14 @@ test('backup restore duplicate-session-bill protection applies only to session b
   assert.match(fn, /if\(row\.kind==='session'\)\{if\(billedSessionIds\.has/);
   assert.ok(fn.indexOf("if(row.kind==='session'){if(billedSessionIds.has") < fn.indexOf("Backup contains duplicate bills for session"));
 });
+
+
+test('backup restore verifies session bill amount, duration, and discount against its source session', () => {
+  const start = source.indexOf('function restoreJSON()');
+  const end = source.indexOf('function csvCell(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /const restoredSessionsById=new Map\(\[\.\.\.imported\.sessions,\.\.\.Object\.values\(imported\.archives\)\.flat\(\)\]\.map\(session=>\[session\.id,session\]\)\)/);
+  assert.match(fn, /Number\(row\.amount\)!==Number\(restoredSessionsById\.get\(row\.sessionId\)\.charge\)/, 'bill amount must match the source session charge');
+  assert.match(fn, /Number\(row\.minutes\)!==Number\(restoredSessionsById\.get\(row\.sessionId\)\.minutes\)/, 'bill duration must match the source session');
+  assert.match(fn, /Number\(row\.discount\?\?0\)!==Number\(restoredSessionsById\.get\(row\.sessionId\)\.discount\?\?0\)/, 'bill discount must match the source session');
+});

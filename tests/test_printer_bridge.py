@@ -89,7 +89,7 @@ class BridgeTests(unittest.TestCase):
 
     def test_success_sends_text_to_fixed_thermal_port(self):
         fake_socket = FakePrinterSocket()
-        payload = {"text": "CYBER ARENA\\nBill: BILL-2", "billId": "BILL-2", "printerIp": "192.168.1.44", "port": 1234}
+        payload = {"text": "CYBER ARENA\\x1b@\\nBill: BILL-2", "billId": "BILL-2", "printerIp": "192.168.1.44", "port": 1234}
         connect = Mock(return_value=fake_socket)
         with patch.object(bridge, "socket", SimpleNamespace(create_connection=connect)):
             status, headers, result = self.request(
@@ -101,6 +101,7 @@ class BridgeTests(unittest.TestCase):
         connect.assert_called_once_with(("192.168.1.44", 9100), timeout=4)
         self.assertIn(b"CYBER ARENA", fake_socket.sent)
         self.assertIn(b"Bill: BILL-2", fake_socket.sent)
+        self.assertNotIn(b"\\x1b", fake_socket.sent)
         self.assertEqual(headers.get("Access-Control-Allow-Origin"), "https://yassinjawdet16-debug.github.io")
 
     def test_public_printer_ip_is_rejected(self):

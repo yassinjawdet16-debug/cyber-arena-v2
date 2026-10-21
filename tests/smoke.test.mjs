@@ -1176,3 +1176,21 @@ test('restore asks the user to confirm the current-data backup download before r
   assert.ok(fn.includes("Restore cancelled. Current data was not replaced."));
   assert.ok(fn.indexOf('backupJSON();if(!confirm(') < fn.indexOf('data=imported;normalize();localStorage.setItem'));
 });
+
+
+test('archived bills remain actionable and are grouped separately from current-day bills', () => {
+  const start = source.indexOf('function billCard(');
+  const end = source.indexOf('function renderBills(', start);
+  const card = source.slice(start, end);
+  assert.ok(card.includes('printBill('), 'unprinted bills, including archived ones, keep a print action');
+  assert.ok(card.includes('openBillPreview('), 'unprinted bills keep a preview action');
+  assert.ok(card.includes('reprintBill('), 'printed bills keep a reprint action');
+  assert.ok(card.includes('exportSingleBill('), 'all bills keep a text export action');
+
+  const renderStart = source.indexOf('function renderBills(');
+  const renderEnd = source.indexOf('function openBillPreview(', renderStart);
+  const render = source.slice(renderStart, renderEnd);
+  assert.match(render, /b\.status!=='printed'&&!b\.archived&&\(b\.businessDay\|\|businessDayForTimestamp\(b\.createdAt\)\)===day/, 'only current-day unprinted bills belong in the live queue');
+  assert.match(render, /b\.status==='printed'&&!b\.archived&&\(b\.businessDay\|\|businessDayForTimestamp\(b\.createdAt\)\)===day/, 'only current-day printed bills belong in the live printed list');
+  assert.match(render, /b\.archived\|\|\(b\.businessDay\|\|businessDayForTimestamp\(b\.createdAt\)\)<day/, 'archived and older-day bills remain visible in the archive list');
+});

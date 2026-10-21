@@ -93,7 +93,7 @@ test('print failure persistence is checked so stale sending state is not hidden'
   const end = source.indexOf('function ', start + 10);
   assert.ok(start >= 0 && end > start, 'print handler must exist');
   const fn = source.slice(start, end);
-  assert.match(fn, /b\.jobStatus='failed';const failureSaved=save\(\);renderBills\(\);/);
+  assert.match(fn, /const uncertain=!!\(e&&\(e\.name==='AbortError'\|\|e instanceof TypeError\)\);b\.jobStatus=uncertain\?'uncertain':'failed';const failureSaved=save\(\);renderBills\(\);/);
   assert.match(fn, /if\(!failureSaved\)\{b\.jobStatus=previousJobStatus;renderBills\(\);setStatus\('🔴 Printing failed, but browser storage could not save the failure status/);
   assert.match(fn, /This bill may still show as sending after reload/);
 });

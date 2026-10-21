@@ -421,6 +421,17 @@ function makePrintBillHarness({ bridgeResponse, bridgeError, saveResults = [true
   return { printBill, bill, data, statuses, renderCalls };
 }
 
+
+test('accepted bridge with failed printed-status save never reports a green success', async () => {
+  const h = makePrintBillHarness({ bridgeResponse: { accepted: true }, saveResults: [true, false] });
+  await h.printBill(h.bill.id);
+  assert.equal(h.bill.status, 'printed', 'bridge acceptance is retained in the current view');
+  assert.equal(h.bill.jobStatus, 'accepted');
+  assert.match(h.statuses.at(-1), /browser could not save its printed status/);
+  assert.doesNotMatch(h.statuses.at(-1), /🟢/);
+  assert.match(h.statuses.at(-1), /Do not press Print again yet/);
+});
+
 test('accepted printer bridge job is marked printed only after save succeeds', async () => {
   const h = makePrintBillHarness({ bridgeResponse: { accepted: true }, saveResults: [true, true] });
   await h.printBill(h.bill.id);

@@ -1026,6 +1026,23 @@ test('cash movement list supports legacy createdAt timestamps when at is absent'
   assert.ok(!elements.cashMovements.innerHTML.includes('time-undefined'), 'movement dates should not become undefined when createdAt is available');
 });
 
+test('daily cash register groups legacy cash movements by timestamp when businessDay is missing', () => {
+  const data = {
+    sessions: [], archives: {}, sales: [],
+    adjustments: [
+      { id: 'legacy-today', kind: 'adjustment', amount: -250, createdAt: 2, description: 'Today expense' },
+      { id: 'legacy-yesterday', kind: 'adjustment', amount: -500, createdAt: 1, description: 'Yesterday expense' }
+    ]
+  };
+  const h = makeRenderCashHarness(data);
+  h.renderCash();
+  assert.equal(h.elements.cashAdjustments.textContent, 'IQD -250',
+    'legacy expense without businessDay should use its Iraq business day from the timestamp');
+  assert.equal(h.elements.cashTotal.textContent, 'IQD -250');
+  assert.match(h.elements.cashMovements.innerHTML, /Today expense/);
+  assert.doesNotMatch(h.elements.cashMovements.innerHTML, /Yesterday expense/);
+});
+
 test('daily cash register totals count session income, extra sales, and adjustments once', () => {
   const data = {
     sessions: [{ id: 'today-session', endedAt: 2, charge: 5000 }],

@@ -93,7 +93,7 @@ test('print failure persistence is checked so stale sending state is not hidden'
   const end = source.indexOf('function ', start + 10);
   assert.ok(start >= 0 && end > start, 'print handler must exist');
   const fn = source.slice(start, end);
-  assert.match(fn, /const uncertain=!!\(e&&\(e\.name==='AbortError'\|\|e instanceof TypeError\)\);b\.jobStatus=uncertain\?'uncertain':'failed';const failureSaved=save\(\);renderBills\(\);/);
+  assert.match(fn, /const uncertain=!!\(e&&\(e\.name==='AbortError'\|\|e instanceof TypeError\|\|\/HTTP 502\/\.test\(String\(e\.message\|\|''\)\)\)\);b\.jobStatus=uncertain\?'uncertain':'failed';const failureSaved=save\(\);renderBills\(\);/);
   assert.match(fn, /if\(!failureSaved\)\{b\.jobStatus=previousJobStatus;renderBills\(\);setStatus\('🔴 Printing failed, but browser storage could not save the failure status/);
   assert.match(fn, /This bill may still show as sending after reload/);
 });
@@ -404,6 +404,14 @@ test('ambiguous printer network failures mark a bill uncertain and warn against 
   assert.equal(h.bill.jobStatus, 'uncertain');
   assert.match(h.statuses.at(-1), /Print result is uncertain/);
   assert.match(h.statuses.at(-1), /duplicate receipt is possible/);
+});
+
+test('printer bridge HTTP 502 is treated as an uncertain print result', async () => {
+  const h = makePrintBillHarness({ bridgeError: new Error('Bridge returned HTTP 502'), saveResults: [true, true] });
+  await h.printBill(h.bill.id);
+  assert.equal(h.bill.status, 'unprinted');
+  assert.equal(h.bill.jobStatus, 'uncertain');
+  assert.match(h.statuses.at(-1), /Print result is uncertain/);
 });
 
 test('uncertain print retry requires explicit confirmation', async () => {

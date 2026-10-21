@@ -67,7 +67,7 @@ class BridgeTests(unittest.TestCase):
 
     def test_print_endpoint_requires_secret(self):
         status, _, payload = self.request(
-            "/print", {"text": "test receipt", "billId": "BILL-1", "printerIp": "192.168.1.44"}
+            "/print", {"text": "test receipt", "billId": "BILL-1", "printerIp": "192.168.1.41"}
         )
         self.assertEqual(status, 401)
         self.assertFalse(payload["accepted"])
@@ -75,7 +75,7 @@ class BridgeTests(unittest.TestCase):
     def test_print_endpoint_rejects_untrusted_origin(self):
         status, _, _ = self.request(
             "/print",
-            {"text": "test receipt", "billId": "BILL-1", "printerIp": "192.168.1.44"},
+            {"text": "test receipt", "billId": "BILL-1", "printerIp": "192.168.1.41"},
             token=bridge.TOKEN,
             origin="https://evil.example",
         )
@@ -89,7 +89,7 @@ class BridgeTests(unittest.TestCase):
 
     def test_success_sends_text_to_fixed_thermal_port(self):
         fake_socket = FakePrinterSocket()
-        payload = {"text": "CYBER ARENA\x1b@\nBill: BILL-2", "billId": "BILL-2", "printerIp": "192.168.1.44", "port": 1234}
+        payload = {"text": "CYBER ARENA\x1b@\nBill: BILL-2", "billId": "BILL-2", "printerIp": "192.168.1.41", "port": 1234}
         connect = Mock(return_value=fake_socket)
         with patch.object(bridge, "socket", SimpleNamespace(create_connection=connect)):
             status, headers, result = self.request(
@@ -98,7 +98,7 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertTrue(result["accepted"])
         self.assertFalse(result["physicalOutputVerified"])
-        connect.assert_called_once_with(("192.168.1.44", 9100), timeout=4)
+        connect.assert_called_once_with(("192.168.1.41", 9100), timeout=4)
         self.assertIn(b"CYBER ARENA", fake_socket.sent)
         self.assertIn(b"Bill: BILL-2", fake_socket.sent)
         self.assertNotIn(b"\x1b", fake_socket.sent)
@@ -118,7 +118,7 @@ class BridgeTests(unittest.TestCase):
         payload = {
             "text": "x" * bridge.MAX_BODY,
             "billId": "BILL-LARGE",
-            "printerIp": "192.168.1.44",
+            "printerIp": "192.168.1.41",
         }
         connect = Mock()
         with patch.object(bridge, "socket", SimpleNamespace(create_connection=connect)):
@@ -158,12 +158,12 @@ class BridgeTests(unittest.TestCase):
         connect.assert_not_called()
 
     def test_empty_receipt_text_is_rejected_before_printer_connection(self):
-        for receipt_text in ("", "   ", "\\x00\\x01"):
+        for receipt_text in ("", "   ", "\x00\x01"):
             with self.subTest(receipt_text=repr(receipt_text)):
                 payload = {
                     "text": receipt_text,
                     "billId": "BILL-EMPTY",
-                    "printerIp": "192.168.1.44",
+                    "printerIp": "192.168.1.41",
                 }
                 connect = Mock()
                 with patch.object(bridge, "socket", SimpleNamespace(create_connection=connect)):
@@ -178,7 +178,7 @@ class BridgeTests(unittest.TestCase):
         body = json.dumps({
             "text": "test receipt",
             "billId": "BILL-CONTENT-TYPE",
-            "printerIp": "192.168.1.44",
+            "printerIp": "192.168.1.41",
         }).encode("utf-8")
         req = Request(
             self.base + "/print",
@@ -209,7 +209,7 @@ class BridgeTests(unittest.TestCase):
                 payload = {
                     "text": "test receipt",
                     "billId": bill_id,
-                    "printerIp": "192.168.1.44",
+                    "printerIp": "192.168.1.41",
                 }
                 connect = Mock()
                 with patch.object(bridge, "socket", SimpleNamespace(create_connection=connect)):

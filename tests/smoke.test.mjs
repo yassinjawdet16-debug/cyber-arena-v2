@@ -1008,6 +1008,8 @@ test('new backups use version 3 and require a cash movement for each session and
   assert.match(fn, /backupVersion>=3/, 'version 3 backups should require complete source cash movements');
   assert.match(fn, /Version 3 backup is missing a unique cash movement for a completed session/);
   assert.match(fn, /Version 3 backup is missing a unique cash movement for an extra sale/);
+  assert.match(fn, /Version 3 backup session charge does not match its timestamps, rate, and discount/);
+  assert.match(fn, /expectedCharge=chargeFor\(\{rate:session\.rate\},session\.startedAt,session\.endedAt,session\.discount\)/, 'version 3 sessions must be checked against the app charge formula');
   assert.match(fn, /backupVersion>3/, 'unknown future backup versions should be rejected');
 });
 

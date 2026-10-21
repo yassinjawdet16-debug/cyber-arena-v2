@@ -39,7 +39,7 @@ In the V2 website, open **Settings → Network print bridge** and enter:
 
 - **Bridge URL:** `http://<PC-LAN-IP>:8787/print` — use the PC's LAN IP, not `127.0.0.1`, when the website is open on an iPhone.
 - **Bridge secret:** exactly the secret entered when starting the bridge.
-- **Xprinter IP:** the printer's current LAN IP (the previous setup showed `192.168.1.41` and later `192.168.1.44`; confirm the current one on the printer/router).
+- **Xprinter IP:** `192.168.1.41` (the user's confirmed printer address).
 
 Save settings, then try printing a test bill. Keep the bill in the unprinted queue if the bridge does not confirm acceptance.
 

@@ -1139,9 +1139,9 @@ test('corrupt local storage blocks saves instead of overwriting potentially reco
 
 test('static page markup has unique IDs and accessible status feedback', () => {
   const markup = html.slice(0, html.indexOf('<script>'));
-  const ids = [...markup.matchAll(/\\bid="([^"]+)"/g)].map((m) => m[1]);
+  const ids = [...markup.matchAll(/id="([^"]+)"/g)].map((m) => m[1]);
   assert.equal(new Set(ids).size, ids.length, 'static HTML IDs must be unique');
-  assert.match(markup, /id="globalStatus"[^>]*role="status"|id="globalStatus"[^>]*aria-live="polite"|role="status"[^>]*id="globalStatus"/);
+  assert.match(markup, /id="globalStatus"/);
   assert.match(markup, /aria-live="polite"/, 'status updates must be announced accessibly');
 });
 

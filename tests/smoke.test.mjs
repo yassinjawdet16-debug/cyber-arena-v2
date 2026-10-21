@@ -57,6 +57,22 @@ test('invalid negative elapsed time cannot create a charge', () => {
   assert.equal(chargeFor({ rate: 3000 }, 3600000, 0).final, 0);
 });
 
+test('invalid timestamps and rates cannot produce NaN or infinite charges', () => {
+  for (const result of [
+    chargeFor({ rate: 3000 }, 'bad-start', 3600000),
+    chargeFor({ rate: 3000 }, 0, 'bad-end'),
+    chargeFor({ rate: 'bad-rate' }, 0, 3600000),
+    chargeFor(null, 0, 3600000),
+    chargeFor({ rate: Number.MAX_VALUE }, 0, Number.MAX_VALUE)
+  ]) {
+    assert.ok(Number.isFinite(result.mins));
+    assert.ok(Number.isFinite(result.raw));
+    assert.ok(Number.isFinite(result.discount));
+    assert.ok(Number.isFinite(result.final));
+    assert.ok(result.final >= 0);
+  }
+});
+
 test('discount cannot make a session charge negative', () => {
   assert.equal(chargeFor({ rate: 5000 }, 0, 1800000, 9000).final, 0);
 });

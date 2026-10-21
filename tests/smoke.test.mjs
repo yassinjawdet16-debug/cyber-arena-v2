@@ -896,3 +896,17 @@ test('backup restore rejects duplicate cash movement IDs', () => {
   assert.match(fn, /adjustmentIds\.has\(row\.id\)/);
   assert.match(fn, /throw Error\('Backup contains an invalid or duplicate cash movement'\);adjustmentIds\.add\(row\.id\)/);
 });
+
+
+test('backup restore rejects record ID collisions across different record types', () => {
+  const start = source.indexOf('function restoreJSON()');
+  const end = source.indexOf('function csvCell(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /const globalRecordIds=new Map\(\)/);
+  assert.match(fn, /globalRecordIds\.has\(id\)/);
+  assert.match(fn, /registerGlobalId\(row\.id,'session'\)/);
+  assert.match(fn, /registerGlobalId\(row\.id,'sale'\)/);
+  assert.match(fn, /registerGlobalId\(row\.id,'bill'\)/);
+  assert.match(fn, /registerGlobalId\(row\.id,'cash movement'\)/);
+  assert.match(fn, /registerGlobalId\(row\.id,'archived session'\)/);
+});

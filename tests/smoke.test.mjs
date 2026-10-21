@@ -98,7 +98,8 @@ test('print failure persistence is checked so stale sending state is not hidden'
   assert.match(fn, /This bill may still show as sending after reload/);
 });
 
-\ntest('print bridge URLs normalize a base address to the /print endpoint', () => {
+
+test('print bridge URLs normalize a base address to the /print endpoint', () => {
   const start = source.indexOf('function resolveBridgeUrl(');
   const end = source.indexOf('async function printBill(', start);
   assert.ok(start >= 0 && end > start, 'bridge URL resolver must exist');

@@ -471,3 +471,12 @@ test('CSV exports quote cells and neutralize spreadsheet formulas in user-contro
   assert.equal(csvCell(-250), '"-250"', 'numeric negative cash movements remain numeric data, not formula text');
   assert.equal(csvCell(null), '""');
 });
+
+test('sales table does not silently hide older extra-sale records', () => {
+  const start = source.indexOf('function renderSales(');
+  const end = source.indexOf('function ', start + 10);
+  const fn = source.slice(start, end);
+  assert.match(fn, /data\.sales\.map\(s=>/);
+  assert.doesNotMatch(fn, /data\.sales\.slice\(0,\s*200\)/);
+  assert.match(fn, /escapeHTML\(s\.name\)/, 'product names must be HTML-escaped');
+});

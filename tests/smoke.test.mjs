@@ -791,7 +791,7 @@ function makeRenderCashHarness(data) {
     {
       baghdadDayStart: () => '2026-10-21',
       businessDayForTimestamp: (timestamp) => timestamp === 1 ? '2026-10-20' : '2026-10-21',
-      allSessions: () => [...data.sessions, ...Object.values(data.archives || {}).flat()],
+      allSessions: () => { const seen = new Set(); return [...data.sessions, ...Object.values(data.archives || {}).flat()].filter((session, index) => { const key = session && session.id ? String(session.id) : `legacy-${index}`; if (seen.has(key)) return false; seen.add(key); return true; }); },
       money: (amount) => 'IQD ' + amount,
       baghdadDateTime: (timestamp) => 'time-' + timestamp,
       escapeHTML: (value) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')

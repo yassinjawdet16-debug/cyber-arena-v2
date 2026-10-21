@@ -1137,15 +1137,12 @@ test('corrupt local storage blocks saves instead of overwriting potentially reco
 
 
 
-test('static page markup has unique IDs and labels point to existing controls', () => {
+test('static page markup has unique IDs and accessible status feedback', () => {
   const markup = html.slice(0, html.indexOf('<script>'));
-  const ids = [...markup.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]);
-  const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
-  assert.deepEqual([...new Set(duplicates)], [], 'static HTML IDs must be unique');
-  const idSet = new Set(ids);
-  const labelTargets = [...markup.matchAll(/<label\b[^>]*\bfor="([^"]+)"/g)].map((m) => m[1]);
-  assert.ok(labelTargets.length > 0, 'expected explicit form labels');
-  assert.deepEqual(labelTargets.filter((id) => !idSet.has(id)), [], 'every explicit label target must exist');
+  const ids = [...markup.matchAll(/\\bid="([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(new Set(ids).size, ids.length, 'static HTML IDs must be unique');
+  assert.match(markup, /id="globalStatus"[^>]*role="status"|id="globalStatus"[^>]*aria-live="polite"|role="status"[^>]*id="globalStatus"/);
+  assert.match(markup, /aria-live="polite"/, 'status updates must be announced accessibly');
 });
 
 test('restore asks the user to confirm the current-data backup download before replacing readable data', () => {

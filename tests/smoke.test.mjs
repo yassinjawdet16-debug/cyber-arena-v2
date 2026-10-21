@@ -27,8 +27,8 @@ const { round250, chargeFor } = new Function(
 const timeStart = source.indexOf('function localDateKey(');
 const timeEnd = source.indexOf('function defaultData(', timeStart);
 assert.ok(timeStart >= 0 && timeEnd > timeStart, 'Baghdad date helpers must exist');
-const { baghdadDayStart } = new Function(
-  source.slice(timeStart, timeEnd) + '; return { baghdadDayStart };'
+const { baghdadDayStart, businessDayForTimestamp } = new Function(
+  source.slice(timeStart, timeEnd) + '; return { baghdadDayStart, businessDayForTimestamp };'
 )();
 
 test('all 16 stations and hourly prices match the business setup', () => {
@@ -80,6 +80,11 @@ test('discount cannot make a session charge negative', () => {
 test('Baghdad business day changes at 06:00 local time', () => {
   assert.equal(baghdadDayStart(new Date('2026-10-21T02:59:00Z')), '2026-10-20'); // 05:59 Iraq
   assert.equal(baghdadDayStart(new Date('2026-10-21T03:00:00Z')), '2026-10-21'); // 06:00 Iraq
+});
+
+test('business-day calculation preserves the Unix epoch timestamp', () => {
+  assert.equal(businessDayForTimestamp(0), '1969-12-31'); // 03:00 Iraq, before the 06:00 business-day start
+  assert.equal(businessDayForTimestamp('invalid'), baghdadDayStart());
 });
 
 test('timed sessions alert without auto-finishing', () => {

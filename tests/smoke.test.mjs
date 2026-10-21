@@ -1134,3 +1134,13 @@ test('corrupt local storage blocks saves instead of overwriting potentially reco
   assert.ok(source.includes("Restore will replace unreadable local data. A backup of that unreadable data cannot be generated."));
   assert.ok(source.includes("if(storageLoadError)setStatus('🔴 Saved data could not be read"));
 });;
+
+
+test('restore asks the user to confirm the current-data backup download before replacing readable data', () => {
+  const start = source.indexOf('function restoreJSON()');
+  const end = source.indexOf('function csvCell(', start);
+  const fn = source.slice(start, end);
+  assert.ok(fn.includes("if(!previousLoadError){backupJSON();if(!confirm('A backup download was requested."));
+  assert.ok(fn.includes("Restore cancelled. Current data was not replaced."));
+  assert.ok(fn.indexOf('backupJSON();if(!confirm(') < fn.indexOf('data=imported;normalize();localStorage.setItem'));
+});

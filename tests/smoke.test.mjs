@@ -166,6 +166,9 @@ test('history table escapes imported station labels and bill statuses', () => {
   const fn = source.slice(start, end);
   assert.match(fn, /escapeHTML\(s\.stationId\)/, 'station labels must be escaped in history');
   assert.match(fn, /escapeHTML\(b\.status\)/, 'bill statuses must be escaped in history');
+  assert.match(fn, /baghdadDateTime\(s\.startedAt\)/, 'history start times must display in Iraq time');
+  assert.match(fn, /baghdadDateTime\(s\.endedAt\)/, 'history end times must display in Iraq time');
+  assert.doesNotMatch(fn, /new Date\(s\.(?:startedAt|endedAt)\)\.toLocaleString\(\)/, 'history times must not depend on the device timezone');
   assert.doesNotMatch(fn, /<td>\$\{s\.stationId\}<\/td>/, 'raw station labels must not enter HTML');
 });
 

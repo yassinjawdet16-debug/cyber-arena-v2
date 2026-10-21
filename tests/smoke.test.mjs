@@ -911,8 +911,8 @@ test('backup restore rejects session bills that do not link to a restored sessio
   const start = source.indexOf('function restoreJSON()');
   const end = source.indexOf('function csvCell(', start);
   const fn = source.slice(start, end);
-  assert.match(fn, /row\.kind==='session'&&\(!stationIds\.has\(row\.stationId\)\|\|typeof row\.sessionId!=='string'\|\|!sessionIds\.has\(row\.sessionId\)/);
-  assert.match(fn, /sessionIds\.add\(row\.id\)/, 'archived session IDs must be included before bill validation');
+  assert.match(fn, /row\.kind==='session'&&\(!stationIds\.has\(row\.stationId\)\|\|typeof row\.sessionId!=='string'\|\|!restoredSessionsById\.has\(row\.sessionId\)/);
+  assert.match(fn, /const restoredSessionsById=new Map\(\[\.\.\.imported\.sessions,\.\.\.Object\.values\(imported\.archives\)\.flat\(\)\]\.map\(session=>\[session\.id,session\]\)\)/, 'current and archived session IDs must be indexed before bill validation');
   assert.match(fn, /Backup contains an invalid bill record/);
 });
 

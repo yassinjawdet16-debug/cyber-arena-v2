@@ -983,9 +983,11 @@ test('failed save while adding an extra sale rolls back both sale and cash movem
 
 
 function makeRenderCashHarness(data) {
+  const helperStart = source.indexOf('function cashMovementBusinessDay(');
   const start = source.indexOf('function renderCash()');
   const end = source.indexOf('function renderSales(', start);
-  assert.ok(start >= 0 && end > start, 'renderCash function must exist');
+  assert.ok(helperStart >= 0 && start > helperStart && end > start, 'cash movement helper and renderCash function must exist');
+  const cashHelperSource = source.slice(helperStart, start);
   const cashSource = source.slice(start, end);
   const elements = Object.fromEntries(
     ['cashSessions', 'cashSales', 'cashAdjustments', 'cashTotal', 'cashMovements']
@@ -994,6 +996,7 @@ function makeRenderCashHarness(data) {
   const renderCash = new Function(
     'data', 'helpers', 'document',
     `const {baghdadDayStart,businessDayForTimestamp,allSessions,money,baghdadDateTime,escapeHTML}=helpers;
+    ${cashHelperSource}
     ${cashSource}
     return renderCash;`
   )(

@@ -415,7 +415,7 @@ test('Arabic rerender applies translations without repeatedly saving language se
 });
 
 test('main menu starts closed and closes after selecting a section', () => {
-  assert.match(source, /id="mainMenu" class="tabs no-print menu-hidden"/);
+  assert.match(html, /id="mainMenu" class="tabs no-print menu-hidden"/);
   assert.match(source, /function toggleMainMenu\(\)/);
   assert.match(source, /menu\.classList\.remove\('menu-open'\);menu\.classList\.add\('menu-hidden'\)/);
   assert.match(source, /setAttribute\('aria-expanded','false'\)/);
@@ -429,7 +429,7 @@ test('bills are rendered into current, printed, unprinted, and archived groups w
   assert.match(fn, /b\.status!=='printed'/);
   assert.match(fn, /b\.status==='printed'/);
   assert.match(fn, /b\.archived\|\|/);
-  assert.match(fn, /id='archivedBills'/);
+  assert.match(fn, /getElementById\('archivedBills'\)/);
   assert.match(fn, /data\.bills\.length/);
 });
 

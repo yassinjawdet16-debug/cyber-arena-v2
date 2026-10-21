@@ -130,7 +130,7 @@ class BridgeTests(unittest.TestCase):
         connect.assert_not_called()
 
     def test_invalid_private_ip_is_rejected_before_printer_connection(self):
-        for address in ("not-an-ip", "127.0.0.1", "169.254.1.10", "192.168.1.44"):
+        for address in ("not-an-ip", "127.0.0.1", "169.254.1.10", "8.8.8.8"):
             with self.subTest(address=address):
                 payload = {
                     "text": "test receipt",
@@ -142,13 +142,9 @@ class BridgeTests(unittest.TestCase):
                     status, _, result = self.request(
                         "/print", payload, token=bridge.TOKEN
                     )
-                if address == "192.168.1.44":
-                    self.assertEqual(status, 200)
-                    self.assertTrue(result["accepted"])
-                else:
-                    self.assertEqual(status, 400)
-                    self.assertFalse(result["accepted"])
-                connect.assert_called_once_with((address, 9100), timeout=4) if address == "192.168.1.44" else connect.assert_not_called()
+                self.assertEqual(status, 400)
+                self.assertFalse(result["accepted"])
+                connect.assert_not_called()
 
 
 if __name__ == "__main__":

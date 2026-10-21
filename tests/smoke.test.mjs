@@ -443,7 +443,7 @@ test('timed session controls reject zero, negative, and fractional durations', (
 });
 
 test('global status messages are announced accessibly', () => {
-  assert.match(html, /id="globalStatus"[^>]*role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/);
+  assert.match(html, /<div(?=[^>]*id="globalStatus")(?=[^>]*role="status")(?=[^>]*aria-live="polite")(?=[^>]*aria-atomic="true")[^>]*>/);
   assert.match(source, /function setStatus\(msg,kind=''\)/);
   assert.match(source, /el\.textContent=msg/);
 });

@@ -895,6 +895,9 @@ test('backup restore rejects duplicate cash movement IDs', () => {
   assert.match(fn, /const adjustmentIds=new Set\(\);for\(const row of imported\.adjustments\)/);
   assert.match(fn, /adjustmentIds\.has\(row\.id\)/);
   assert.match(fn, /throw Error\('Backup contains an invalid or duplicate cash movement'\);adjustmentIds\.add\(row\.id\)/);
+  assert.match(fn, /!\['session','sale','adjustment'\]\.includes\(row\.kind\)/, 'unknown cash movement types must be rejected');
+  assert.match(fn, /!Number\.isSafeInteger\(Number\(row\.amount\)\)/, 'cash movement amounts must be whole IQD values');
+  assert.match(fn, /row\.kind!=='adjustment'&&Number\(row\.amount\)<0/, 'session and sale movements cannot be negative');
 });
 
 

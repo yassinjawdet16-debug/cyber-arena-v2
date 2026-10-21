@@ -268,3 +268,76 @@ test('daily archive rolls back all changes when storage save fails', () => {
   assert.equal(harness.archiveEligible(), false);
   assert.equal(JSON.stringify(harness.getData()), before);
 });
+
+function makePrintBillHarness({ bridgeResponse, bridgeError, saveResults = [true, true], initialStatus = 'unprinted' }) {
+  const start = source.indexOf('async function printBill(');
+  const end = source.indexOf('function reprintBill(', start);
+  assert.ok(start >= 0 && end > start, 'printBill function must exist');
+  const printSource = source.slice(start, end);
+  const bill = {
+    id: 'bill-test-1',
+    status: initialStatus,
+    jobStatus: 'not-sent',
+    amount: 5000,
+    stationId: 'PS5-02'
+  };
+  const data = { bills: [bill], settings: { bridgeUrl: 'http://192.168.1.122:8787/print', bridgeToken: 'test-token', printerIp: '192.168.1.41' } };
+  const statuses = [];
+  const renderCalls = [];
+  let saveCount = 0;
+  const mockFetch = async () => {
+    if (bridgeError) throw bridgeError;
+    return { ok: true, status: 200, json: async () => bridgeResponse };
+  };
+  const document = { getElementById: () => ({ innerHTML: '', classList: { remove() {}, add() {} } }), body: { classList: { add() {}, remove() {} } } };
+  const printBill = new Function(
+    'data', 'resolveBridgeUrl', 'save', 'renderBills', 'setStatus', 'fetch', 'billText',
+    'AbortController', 'setTimeout', 'clearTimeout', 'Date', 'renderAll', 'document',
+    'window', 'escapeHTML',
+    printSource + '; return printBill;'
+  )(
+    data,
+    (value) => value,
+    () => saveResults[Math.min(saveCount++, saveResults.length - 1)],
+    () => renderCalls.push('bills'),
+    (message) => statuses.push(message),
+    mockFetch,
+    () => 'TEST RECEIPT',
+    AbortController,
+    (fn) => globalThis.setTimeout(fn, 100000),
+    (id) => globalThis.clearTimeout(id),
+    Date,
+    () => renderCalls.push('all'),
+    document,
+    { print() {} },
+    (value) => String(value)
+  );
+  return { printBill, bill, data, statuses, renderCalls };
+}
+
+test('accepted printer bridge job is marked printed only after save succeeds', async () => {
+  const h = makePrintBillHarness({ bridgeResponse: { accepted: true }, saveResults: [true, true] });
+  await h.printBill(h.bill.id);
+  assert.equal(h.bill.status, 'printed');
+  assert.equal(h.bill.jobStatus, 'accepted');
+  assert.ok(Number.isFinite(h.bill.printedAt));
+  assert.match(h.statuses.at(-1), /accepted the job and its status was saved/);
+  assert.match(h.statuses.at(-1), /Physical paper output is not independently verified/);
+});
+
+test('printer bridge rejection leaves the bill unprinted and reports failure', async () => {
+  const h = makePrintBillHarness({ bridgeResponse: { accepted: false, message: 'Printer offline' }, saveResults: [true, true] });
+  await h.printBill(h.bill.id);
+  assert.equal(h.bill.status, 'unprinted');
+  assert.equal(h.bill.jobStatus, 'failed');
+  assert.match(h.statuses.at(-1), /Printing failed: Printer offline/);
+});
+
+test('accepted bridge job with failed status save warns against duplicate printing', async () => {
+  const h = makePrintBillHarness({ bridgeResponse: { accepted: true }, saveResults: [true, false] });
+  await h.printBill(h.bill.id);
+  assert.equal(h.bill.status, 'printed');
+  assert.equal(h.bill.jobStatus, 'accepted');
+  assert.match(h.statuses.at(-1), /could not save its printed status/);
+  assert.match(h.statuses.at(-1), /Do not press Print again yet/);
+});

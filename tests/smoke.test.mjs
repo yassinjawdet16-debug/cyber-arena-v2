@@ -759,6 +759,21 @@ test('global status messages are announced accessibly and use outcome colors', (
   assert.match(source, /String\(msg\)\.startsWith\('⚠️'\)\|\|String\(msg\)\.startsWith\('🟠'\)\?'gold'/);
 });
 
+test('archived unprinted bills remain printable and preview text does not promise the wrong queue', () => {
+  const cardStart = source.indexOf('function billCard(b)');
+  const cardEnd = source.indexOf('function renderBills(', cardStart);
+  const card = source.slice(cardStart, cardEnd);
+  assert.match(card, /b\.status!=='printed'\?/);
+  assert.match(card, /printBill\(\$\{inlineArg\(b\.id\)\}\)/);
+  assert.match(card, /openBillPreview\(\$\{inlineArg\(b\.id\)\}\)/);
+  const renderStart = source.indexOf('function renderBills(');
+  const renderEnd = source.indexOf('function ', renderStart + 10);
+  const render = source.slice(renderStart, renderEnd);
+  assert.match(render, /archivedBills\.length\?archivedBills\.map\(billCard\)\.join\(''\)/);
+  assert.match(source, /Bill remains unprinted until the printing service confirms acceptance/);
+  assert.doesNotMatch(source, /Bill remains in Unprinted Bills until the printing service confirms acceptance/);
+});
+
 test('bill center does not silently truncate current bills or archived receipts', () => {
   const start = source.indexOf('function renderBills(');
   const end = source.indexOf('function ', start + 10);

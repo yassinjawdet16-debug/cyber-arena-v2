@@ -83,7 +83,7 @@
   <div class="card" style="margin-top:14px"><h3>🧹 Clear history (protected)</h3><p class="muted">Archives completed sessions before clearing the current history. Financial records and bills are not deleted.</p><button class="danger" onclick="clearHistoryProtected()">Clear current history</button><hr style="border-color:var(--line);margin:18px 0"><h3>⚠️ Full business-data reset</h3><p class="muted">Permanently deletes local records on this device. Download a backup first. Use only if you really intend to reset the business.</p><button class="danger" onclick="fullResetProtected()">Full reset…</button></div>
   <div class="notice" style="margin-top:14px">Storage note: data is stored in this browser on this device. Clearing browser data or changing devices may remove access. Download JSON backups regularly. This standalone file does not synchronize between devices or create a server-side backup.</div>
  </section>
- <div id="globalStatus" class="statusline no-print">🟢 Ready. Data is saved locally on this device.</div>
+ <div role="status" aria-live="polite" aria-atomic="true" id="globalStatus" class="statusline no-print">🟢 Ready. Data is saved locally on this device.</div>
  <div class="footer">CYBER ARENA V2 • Keep regular backups • Not a substitute for a server-backed multi-device database</div>
 </main>
 

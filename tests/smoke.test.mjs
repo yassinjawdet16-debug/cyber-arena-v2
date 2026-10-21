@@ -69,6 +69,9 @@ test('Baghdad business day changes at 06:00 local time', () => {
 test('timed sessions alert without auto-finishing', () => {
   assert.match(source, /TIME EXPIRED — SESSION STILL RUNNING/);
   assert.match(source, /session is still running/);
+  assert.match(source, /function baghdadTime\(value\)/, 'active session start times must use an explicit Iraq timezone');
+  assert.match(source, /baghdadTime\(a\.startedAt\)/, 'station timers must show start time in Iraq time');
+  assert.doesNotMatch(source, /new Date\(a\.startedAt\)\.toLocaleTimeString\(\)/, 'station time must not depend on device timezone');
   assert.doesNotMatch(source, /if\(expired\.length\)[\s\S]{0,1000}finishSession\(/);
 });
 

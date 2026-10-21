@@ -1136,6 +1136,18 @@ test('corrupt local storage blocks saves instead of overwriting potentially reco
 });;
 
 
+
+test('static page markup has unique IDs and labels point to existing controls', () => {
+  const markup = html.slice(0, html.indexOf('<script>'));
+  const ids = [...markup.matchAll(/\\bid="([^"]+)"/g)].map((m) => m[1]);
+  const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
+  assert.deepEqual([...new Set(duplicates)], [], 'static HTML IDs must be unique');
+  const idSet = new Set(ids);
+  const labelTargets = [...markup.matchAll(/<label\\b[^>]*\\bfor="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(labelTargets.length > 0, 'expected explicit form labels');
+  assert.deepEqual(labelTargets.filter((id) => !idSet.has(id)), [], 'every explicit label target must exist');
+});
+
 test('restore asks the user to confirm the current-data backup download before replacing readable data', () => {
   const start = source.indexOf('function restoreJSON()');
   const end = source.indexOf('function csvCell(', start);

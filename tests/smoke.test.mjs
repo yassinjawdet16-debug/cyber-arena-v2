@@ -193,3 +193,78 @@ test('backup restore rejects duplicate IDs and rolls storage back on failure', (
   assert.match(fn, /const previousStorage=localStorage\.getItem\(STORAGE_KEY\)/);
   assert.match(fn, /Previous data was restored where browser storage allowed/);
 });
+
+test('daily archive function moves old sessions and bills while preserving active sessions and financial records', () => {
+  const start = source.indexOf('function archiveEligible(');
+  const end = source.indexOf('function manualArchive(', start);
+  assert.ok(start >= 0 && end > start);
+  const archiveSource = source.slice(start, end);
+  const oldSession = { id: 'old-session', stationId: 'PS5-02', endedAt: 1 };
+  const currentSession = { id: 'today-session', stationId: 'PS5-03', endedAt: 2 };
+  const oldBill = { id: 'old-bill', createdAt: 1, businessDay: '2026-10-20', status: 'unprinted' };
+  const currentBill = { id: 'today-bill', createdAt: 2, businessDay: '2026-10-21', status: 'unprinted' };
+  const data = {
+    lastArchiveDay: null,
+    sessions: [oldSession, currentSession],
+    archives: {},
+    bills: [oldBill, currentBill],
+    active: { 'PS4-09': { id: 'active-session' } },
+    sales: [{ id: 'sale', total: 1000 }],
+    adjustments: [{ id: 'cash', amount: -250 }]
+  };
+  const originalSales = JSON.stringify(data.sales);
+  const originalAdjustments = JSON.stringify(data.adjustments);
+  let renders = 0;
+  let lastStatus = '';
+  const archiveEligible = new Function(
+    'data', 'baghdadDayStart', 'businessDayForTimestamp', 'save', 'renderAll', 'setStatus',
+    archiveSource + '; return archiveEligible;'
+  )(
+    data,
+    () => '2026-10-21',
+    (ts) => ts === 1 ? '2026-10-20' : '2026-10-21',
+    () => true,
+    () => { renders++; },
+    (message) => { lastStatus = message; }
+  );
+  assert.equal(archiveEligible(), true);
+  assert.deepEqual(data.sessions.map(s => s.id), ['today-session']);
+  assert.deepEqual(data.archives['2026-10-20'].map(s => s.id), ['old-session']);
+  assert.equal(data.archives['2026-10-20'][0].archived, true);
+  assert.equal(data.bills[0].archived, true);
+  assert.equal(data.bills[1].archived, undefined);
+  assert.ok(data.active['PS4-09'], 'active session must remain untouched');
+  assert.equal(JSON.stringify(data.sales), originalSales);
+  assert.equal(JSON.stringify(data.adjustments), originalAdjustments);
+  assert.equal(renders, 1);
+  assert.match(lastStatus, /Financial records preserved/);
+});
+
+test('daily archive rolls back all changes when storage save fails', () => {
+  const start = source.indexOf('function archiveEligible(');
+  const end = source.indexOf('function manualArchive(', start);
+  const archiveSource = source.slice(start, end);
+  const data = {
+    lastArchiveDay: null,
+    sessions: [{ id: 'old-session', stationId: 'PS5-02', endedAt: 1 }],
+    archives: {},
+    bills: [{ id: 'old-bill', createdAt: 1, businessDay: '2026-10-20', status: 'unprinted' }],
+    active: {},
+    sales: [{ id: 'sale', total: 1000 }],
+    adjustments: []
+  };
+  const before = JSON.stringify(data);
+  const archiveEligible = new Function(
+    'data', 'baghdadDayStart', 'businessDayForTimestamp', 'save', 'renderAll', 'setStatus',
+    archiveSource + '; return archiveEligible;'
+  )(
+    data,
+    () => '2026-10-21',
+    () => '2026-10-20',
+    () => false,
+    () => {},
+    () => {}
+  );
+  assert.equal(archiveEligible(), false);
+  assert.equal(JSON.stringify(data), before);
+});

@@ -99,3 +99,53 @@ test('restored archived sessions validate dates, rates, duration and charge', ()
   assert.match(source, /Backup archive contains an invalid session record/);
   assert.match(source, /Backup contains an invalid archived session record/);
 });
+
+test('daily archiving moves old sessions and preserves sales and cash records', () => {
+  const start = source.indexOf('function archiveEligible(');
+  const end = source.indexOf('function manualArchive(', start);
+  assert.ok(start >= 0 && end > start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /data\.archives/);
+  assert.match(fn, /data\.sessions=keep/);
+  assert.match(fn, /b\.archived=true/);
+  assert.doesNotMatch(fn, /data\.sales\s*=/);
+  assert.doesNotMatch(fn, /data\.adjustments\s*=/);
+  assert.match(fn, /if\(!save\(\)\)\{data=JSON\.parse\(previousData\)/);
+});
+
+test('Clear History archives sessions without deleting sales or bills', () => {
+  const start = source.indexOf('function clearHistoryProtected(');
+  const end = source.indexOf('function fullResetProtected(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /data\.sessions=\[\]/);
+  assert.match(fn, /data\.archives/);
+  assert.doesNotMatch(fn, /data\.sales\s*=/);
+  assert.doesNotMatch(fn, /data\.bills\s*=/);
+});
+
+test('interrupted print jobs return to the unprinted queue on reload', () => {
+  const start = source.indexOf('function normalize(');
+  const end = source.indexOf('function save(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /b\.jobStatus==='sending'/);
+  assert.match(fn, /b\.jobStatus='failed'/);
+  assert.match(fn, /b\.status!=='printed'\)b\.status='unprinted'/);
+});
+
+test('completed sessions create a bill and a cash movement with rollback protection', () => {
+  const start = source.indexOf('function finishSession(');
+  const end = source.indexOf('function extendSession(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /data\.sessions\.unshift\(sess\)/);
+  assert.match(fn, /data\.bills\.unshift\(bill\)/);
+  assert.match(fn, /data\.adjustments\.push/);
+  assert.match(fn, /if\(!save\(\)\)\{data=JSON\.parse\(previousData\)/);
+});
+
+test('manual bills begin unprinted and are retained when saving fails', () => {
+  const start = source.indexOf('function makeManualBill(');
+  const end = source.indexOf('function ', start + 10);
+  const fn = source.slice(start, end);
+  assert.match(fn, /status:'unprinted'/);
+  assert.match(fn, /if\(!save\(\)\)\{data=JSON\.parse\(previousData\)/);
+});

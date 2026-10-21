@@ -457,3 +457,17 @@ test('bill center does not silently truncate same-day printed bills or archived 
   assert.doesNotMatch(fn, /const pr=live\.filter\(b=>b\.status==='printed'\)\.slice/);
   assert.doesNotMatch(fn, /const old=data\.bills\.filter\([\s\S]*?\.slice\(0,100\)/);
 });
+
+test('CSV exports quote cells and neutralize spreadsheet formulas in user-controlled text', () => {
+  const start = source.indexOf('function csvCell(');
+  const end = source.indexOf('function ', start + 10);
+  assert.ok(start >= 0 && end > start);
+  const csvCell = new Function(source.slice(start, end) + '; return csvCell;')();
+  assert.equal(csvCell('ordinary text'), '"ordinary text"');
+  assert.equal(csvCell('a,"b"'), '"a,""b"""');
+  assert.equal(csvCell('=HYPERLINK("https://bad.example","click")'), '"\'=HYPERLINK(""https://bad.example"",""click"")"');
+  assert.equal(csvCell('  +SUM(A1:A2)'), '"\'  +SUM(A1:A2)"');
+  assert.equal(csvCell('@command'), '"\'@command"');
+  assert.equal(csvCell(-250), '"-250"', 'numeric negative cash movements remain numeric data, not formula text');
+  assert.equal(csvCell(null), '""');
+});

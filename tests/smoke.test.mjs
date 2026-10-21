@@ -161,3 +161,35 @@ test('manual bills begin unprinted and are retained when saving fails', () => {
   assert.match(fn, /status:'unprinted'/);
   assert.match(fn, /if\(!save\(\)\)\{data=JSON\.parse\(previousData\)/);
 });
+
+test('daily archive retains bills and active sessions instead of deleting them', () => {
+  const start = source.indexOf('function archiveEligible(');
+  const end = source.indexOf('function manualArchive(', start);
+  assert.ok(start >= 0 && end > start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /for\(const b of data\.bills\)/);
+  assert.match(fn, /b\.archived=true/);
+  assert.doesNotMatch(fn, /data\.bills\s*=\s*\[\]/);
+  assert.doesNotMatch(fn, /data\.active\s*=\s*\{\}/);
+});
+
+test('receipt designer clamps paper width and restores settings after save failure', () => {
+  const start = source.indexOf('function saveReceiptDesigner(');
+  const end = source.indexOf('function renderReceiptDesigner(', start);
+  assert.ok(start >= 0 && end > start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /Math\.max\(24,Math\.min\(48/);
+  assert.match(fn, /\['small','normal','large'\]\.includes\(size\)/);
+  assert.match(fn, /if\(!save\(\)\)\{data\.settings=JSON\.parse\(previous\)/);
+});
+
+test('backup restore rejects duplicate IDs and rolls storage back on failure', () => {
+  const start = source.indexOf('function restoreJSON(');
+  const end = source.indexOf('function csvCell(', start);
+  assert.ok(start >= 0 && end > start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /validateUniqueIds\(imported\.sessions,'session'\)/);
+  assert.match(fn, /validateUniqueIds\(imported\.bills,'bill'\)/);
+  assert.match(fn, /const previousStorage=localStorage\.getItem\(STORAGE_KEY\)/);
+  assert.match(fn, /Previous data was restored where browser storage allowed/);
+});

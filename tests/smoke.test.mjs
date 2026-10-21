@@ -732,6 +732,14 @@ test('all unprinted bills remain queued across the daily archive; only old print
   assert.match(fn, /data\.bills\.length/, 'rendering must not delete bill records');
 });
 
+test('extending a timed session resets its one-time expiration alert', () => {
+  const start = source.indexOf('function extendSession(');
+  const end = source.indexOf('function ', start + 10);
+  const fn = source.slice(start, end);
+  assert.match(fn, /window\\._alerted\\)window\\._alerted\\.delete\\(a\\.id\\)/);
+  assert.ok(fn.indexOf('if(window._alerted)window._alerted.delete(a.id)') < fn.lastIndexOf('renderAll()'));
+});
+
 test('timed session controls reject zero, negative, and fractional durations', () => {
   const start = source.indexOf('function startSession(');
   const end = source.indexOf('function ', start + 10);

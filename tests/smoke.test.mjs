@@ -492,16 +492,15 @@ test('main menu starts closed and closes after selecting a section', () => {
   assert.match(source, /setAttribute\('aria-expanded','false'\)/);
 });
 
-test('bills are rendered into current, printed, unprinted, and archived groups without deletion', () => {
+test('all unprinted bills remain queued across the daily archive; only old printed bills move to archive view', () => {
   const start = source.indexOf('function renderBills(');
   const end = source.indexOf('function ', start + 10);
-  assert.ok(start >= 0 && end > start);
   const fn = source.slice(start, end);
-  assert.match(fn, /b\.status!=='printed'/);
-  assert.match(fn, /b\.status==='printed'/);
-  assert.match(fn, /b\.archived\|\|/);
+  assert.match(fn, /const un=data\.bills\.filter\(b=>b\.status!=='printed'\)/, 'unprinted bills must remain in the queue regardless of business day');
+  assert.match(fn, /const livePrinted=data\.bills\.filter\(b=>b\.status==='printed'&&!b\.archived/);
+  assert.match(fn, /const oldPrinted=data\.bills\.filter\(b=>b\.status==='printed'&&\(b\.archived\|\|/);
   assert.match(fn, /getElementById\('archivedBills'\)/);
-  assert.match(fn, /data\.bills\.length/);
+  assert.match(fn, /data\.bills\.length/, 'rendering must not delete bill records');
 });
 
 test('timed session controls reject zero, negative, and fractional durations', () => {

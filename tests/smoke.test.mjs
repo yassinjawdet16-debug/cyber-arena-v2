@@ -407,6 +407,15 @@ test('daily archive function moves old sessions and bills while preserving activ
   assert.match(lastStatus, /Financial records preserved/);
 });
 
+test('daily archive is checked at startup, when returning to the tab, and periodically', () => {
+  assert.match(source, /document\.addEventListener\('visibilitychange',\(\)=>\{if\(!document\.hidden\)\{archiveEligible\(false\);tick\(\)\}\}\)/,
+    'returning to the website after a date change should trigger an archive check');
+  assert.match(source, /archiveEligible\(false\);renderAll\(\)/,
+    'opening the website should check for a missed daily archive before the first render');
+  assert.match(source, /setInterval\(\(\)=>archiveEligible\(false\),30000\)/,
+    'periodic checks should catch the 06:00 Iraq business-day rollover while the site remains open');
+});
+
 test('daily archive is idempotent when checked repeatedly on the same business day', () => {
   const start = source.indexOf('function archiveEligible(');
   const end = source.indexOf('function manualArchive(', start);

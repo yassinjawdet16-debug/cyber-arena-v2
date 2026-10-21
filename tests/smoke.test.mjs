@@ -341,3 +341,65 @@ test('accepted bridge job with failed status save warns against duplicate printi
   assert.match(h.statuses.at(-1), /could not save its printed status/);
   assert.match(h.statuses.at(-1), /Do not press Print again yet/);
 });
+
+function makeFinishSessionHarness({ saveResult = true } = {}) {
+  const start = source.indexOf('function finishSession(');
+  const end = source.indexOf('function extendSession(', start);
+  assert.ok(start >= 0 && end > start, 'finishSession function must exist');
+  const finishSource = source.slice(start, end);
+  const startedAt = Date.now() - 60 * 60 * 1000;
+  const data = {
+    stations: [{ id: 'PS5-02', rate: 5000, type: 'PS5' }],
+    active: { 'PS5-02': { id: 'session-1', stationId: 'PS5-02', startedAt, rate: 5000, discount: 0 } },
+    sessions: [], bills: [], adjustments: [],
+    settings: { pin: '1234' }
+  };
+  const statuses = [];
+  const calls = [];
+  let uidCounter = 0;
+  const helpers = {
+    activeFor: (id) => data.active[id],
+    chargeFor: (station, from, to, discount) => ({ raw: 5000, final: 5000, discount: discount || 0, mins: 60 }),
+    uid: (prefix) => prefix + '-' + (++uidCounter),
+    baghdadDayStart: () => '2026-10-21',
+    localDateKey: () => '2026-10-21',
+    save: () => saveResult,
+    renderAll: () => calls.push('renderAll'),
+    setStatus: (message) => statuses.push(message),
+    openBillPreview: (id) => calls.push('preview:' + id)
+  };
+  const harness = new Function(
+    'initialData', 'helpers', 'Date', 'JSON',
+    `let data=initialData;
+    const {activeFor,chargeFor,uid,baghdadDayStart,localDateKey,save,renderAll,setStatus,openBillPreview}=helpers;
+    ${finishSource}
+    return {finishSession,getData:()=>data};`
+  )(data, helpers, Date, JSON);
+  return { ...harness, statuses, calls };
+}
+
+test('finishing a session creates exactly one bill and a cash movement', () => {
+  const h = makeFinishSessionHarness();
+  h.finishSession('PS5-02');
+  const data = h.getData();
+  assert.equal(data.active['PS5-02'], undefined);
+  assert.equal(data.sessions.length, 1);
+  assert.equal(data.sessions[0].charge, 5000);
+  assert.equal(data.bills.length, 1);
+  assert.equal(data.bills[0].status, 'unprinted');
+  assert.equal(data.bills[0].sessionId, data.sessions[0].id);
+  assert.equal(data.adjustments.length, 1);
+  assert.equal(data.adjustments[0].amount, 5000);
+  assert.ok(h.calls.includes('preview:' + data.bills[0].id));
+});
+
+test('failed save while finishing a session restores the active session and creates no records', () => {
+  const h = makeFinishSessionHarness({ saveResult: false });
+  h.finishSession('PS5-02');
+  const data = h.getData();
+  assert.ok(data.active['PS5-02']);
+  assert.equal(data.sessions.length, 0);
+  assert.equal(data.bills.length, 0);
+  assert.equal(data.adjustments.length, 0);
+  assert.match(h.statuses.at(-1), /could not be saved/);
+});

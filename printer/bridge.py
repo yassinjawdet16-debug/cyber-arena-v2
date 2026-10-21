@@ -9,6 +9,7 @@ import hmac
 import ipaddress
 import json
 import os
+import re
 import socket
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
@@ -18,6 +19,7 @@ PORT = int(os.environ.get("BRIDGE_PORT", "8787"))
 TOKEN = os.environ.get("BRIDGE_TOKEN", "").strip()
 MAX_BODY = 32 * 1024
 PRINTER_PORT = 9100
+PRIVATE_NETWORKS = tuple(ipaddress.ip_network(cidr) for cidr in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"))
 DEFAULT_ORIGINS = "https://yassinjawdet16-debug.github.io"
 ALLOWED_ORIGINS = {
     item.strip().rstrip("/")
@@ -132,14 +134,14 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             self._send_json(400, {"accepted": False, "message": "Printer IP address is invalid."})
             return
-        if (
-            address.version != 4
-            or not address.is_private
-            or address.is_loopback
-            or address.is_link_local
-            or address.is_multicast
-        ):
-            self._send_json(400, {"accepted": False, "message": "Printer must use a private LAN IPv4 address."})
+        if address.version != 4 or not any(address in network for network in PRIVATE_NETWORKS):
+            self._send_json(400, {"accepted": False, "message": "Printer must use an RFC1918 private LAN IPv4 address."})
+            return
+
+        # Treat receipts as text only; do not allow embedded ESC/POS control commands.
+        text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
+        if not text.strip():
+            self._send_json(400, {"accepted": False, "message": "Receipt text is empty after sanitization."})
             return
 
         # Never accept an arbitrary port from the browser: thermal printers use TCP 9100.

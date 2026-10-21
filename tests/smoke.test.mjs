@@ -502,4 +502,10 @@ test('bill cards HTML-escape bill IDs and station labels before rendering', () =
   const fn = source.slice(start, end);
   assert.match(fn, /escapeHTML\(b\.id\)/, 'bill ID must be escaped');
   assert.match(fn, /escapeHTML\(b\.stationId\)/, 'station label must be escaped');
+  assert.match(source, /function inlineArg\(value\)\{return escapeHTML\(JSON\.stringify\(String\(value\)\)\.replace\(\/<\/g,'\\\\u003c'\)\)\}/, 'IDs must be encoded as JavaScript string literals and HTML-escaped');
+  assert.match(fn, /printBill\(\$\{inlineArg\(b\.id\)\}\)/);
+  assert.match(fn, /openBillPreview\(\$\{inlineArg\(b\.id\)\}\)/);
+  assert.match(fn, /reprintBill\(\$\{inlineArg\(b\.id\)\}\)/);
+  assert.match(fn, /exportSingleBill\(\$\{inlineArg\(b\.id\)\}\)/);
+  assert.doesNotMatch(fn, /(?:printBill|openBillPreview|reprintBill|exportSingleBill)\('\$\{b\.id\}'\)/, 'raw imported IDs must never be interpolated into JavaScript handlers');
 });

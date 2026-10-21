@@ -770,3 +770,70 @@ test('failed save while adding an extra sale rolls back both sale and cash movem
   assert.equal(h.getData().adjustments.length, 0);
   assert.match(h.statuses.at(-1), /Sale was not saved/);
 });
+
+
+function makeRenderCashHarness(data) {
+  const start = source.indexOf('function renderCash()');
+  const end = source.indexOf('function renderSales(', start);
+  assert.ok(start >= 0 && end > start, 'renderCash function must exist');
+  const cashSource = source.slice(start, end);
+  const elements = Object.fromEntries(
+    ['cashSessions', 'cashSales', 'cashAdjustments', 'cashTotal', 'cashMovements']
+      .map((id) => [id, { textContent: '', innerHTML: '' }])
+  );
+  const renderCash = new Function(
+    'data', 'helpers', 'document',
+    `const {baghdadDayStart,businessDayForTimestamp,allSessions,money,baghdadDateTime,escapeHTML}=helpers;
+    ${cashSource}
+    return renderCash;`
+  )(
+    data,
+    {
+      baghdadDayStart: () => '2026-10-21',
+      businessDayForTimestamp: (timestamp) => timestamp === 1 ? '2026-10-20' : '2026-10-21',
+      allSessions: () => [...data.sessions, ...Object.values(data.archives || {}).flat()],
+      money: (amount) => 'IQD ' + amount,
+      baghdadDateTime: (timestamp) => 'time-' + timestamp,
+      escapeHTML: (value) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+    },
+    { getElementById: (id) => elements[id] }
+  );
+  return { renderCash, elements };
+}
+
+test('daily cash register totals count session income, extra sales, and adjustments once', () => {
+  const data = {
+    sessions: [{ id: 'today-session', endedAt: 2, charge: 5000 }],
+    archives: {},
+    sales: [{ id: 'today-sale', businessDay: '2026-10-21', createdAt: 2, total: 1500 }],
+    adjustments: [
+      { id: 'session-movement', businessDay: '2026-10-21', kind: 'session', amount: 5000, at: 2, description: 'Session PS5-02' },
+      { id: 'sale-movement', businessDay: '2026-10-21', kind: 'sale', amount: 1500, at: 2, description: '2 × Water' },
+      { id: 'expense', businessDay: '2026-10-21', kind: 'adjustment', amount: -250, at: 3, description: 'Cleaning supplies' },
+      { id: 'old-session', businessDay: '2026-10-20', kind: 'adjustment', amount: 9000, at: 1, description: 'Previous day' }
+    ]
+  };
+  const h = makeRenderCashHarness(data);
+  h.renderCash();
+  assert.equal(h.elements.cashSessions.textContent, 'IQD 5000');
+  assert.equal(h.elements.cashSales.textContent, 'IQD 1500');
+  assert.equal(h.elements.cashAdjustments.textContent, 'IQD -250');
+  assert.equal(h.elements.cashTotal.textContent, 'IQD 6250');
+  assert.match(h.elements.cashMovements.innerHTML, /Cleaning supplies/);
+  assert.doesNotMatch(h.elements.cashMovements.innerHTML, /Previous day/);
+  assert.match(h.elements.cashMovements.innerHTML, /Session PS5-02/);
+});
+
+test('daily cash register counts archived session income without counting duplicate archived IDs twice', () => {
+  const archived = { id: 'archived-session', endedAt: 2, charge: 3000 };
+  const data = {
+    sessions: [archived],
+    archives: { '2026-10-21': [{ ...archived, archived: true }] },
+    sales: [],
+    adjustments: []
+  };
+  const h = makeRenderCashHarness(data);
+  h.renderCash();
+  assert.equal(h.elements.cashSessions.textContent, 'IQD 3000');
+  assert.equal(h.elements.cashTotal.textContent, 'IQD 3000');
+});

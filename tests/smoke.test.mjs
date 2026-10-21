@@ -88,6 +88,18 @@ test('printing requires bridge acceptance before marking a bill printed', () => 
   assert.match(source, /text:billText\(b\),billId:b\.id/);
 });
 
+test('print bridge URLs normalize a base address to the /print endpoint', () => {
+  const start = source.indexOf('function resolveBridgeUrl(');
+  const end = source.indexOf('async function printBill(', start);
+  assert.ok(start >= 0 && end > start, 'bridge URL resolver must exist');
+  const { resolveBridgeUrl } = new Function(source.slice(start, end) + '; return { resolveBridgeUrl };')();
+  assert.equal(resolveBridgeUrl('http://192.168.1.122:8787'), 'http://192.168.1.122:8787/print');
+  assert.equal(resolveBridgeUrl('http://192.168.1.122:8787/'), 'http://192.168.1.122:8787/print');
+  assert.equal(resolveBridgeUrl('http://192.168.1.122:8787/print'), 'http://192.168.1.122:8787/print');
+  assert.throws(() => resolveBridgeUrl('ftp://192.168.1.122:8787'), /HTTP or HTTPS/);
+  assert.throws(() => resolveBridgeUrl('http://192.168.1.122:8787/health'), /end in \/print/);
+});
+
 test('backup and CSV export functions are present', () => {
   for (const name of ['backupJSON', 'restoreJSON', 'exportCSV', 'exportSalesCSV', 'exportBillsCSV', 'exportCashCSV']) {
     assert.ok(source.includes('function ' + name + '('), name + ' should exist');

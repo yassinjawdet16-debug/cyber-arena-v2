@@ -1130,6 +1130,7 @@ test('corrupt local storage blocks saves instead of overwriting potentially reco
   assert.ok(source.includes('let data,storageLoadError=null;'));
   assert.ok(source.includes('storageLoadError=String(e&&e.message||e);data=defaultData()'));
   assert.ok(source.includes("if(storageLoadError){setStatus('🔴 Saved data could not be read, so saving is blocked to protect it."));
-  assert.ok(source.includes("storageLoadError=null;renderAll();setStatus('🟢 Backup restored after validation"));
+  assert.ok(source.includes("storageLoadError=null;renderAll();setStatus(previousLoadError?'🟢 Backup restored after validation."));
+  assert.ok(source.includes("Restore will replace unreadable local data. A backup of that unreadable data cannot be generated."));
   assert.ok(source.includes("if(storageLoadError)setStatus('🔴 Saved data could not be read"));
 });;

@@ -495,3 +495,11 @@ test('static HTML event handlers reference existing app functions', () => {
   }
   assert.deepEqual([...missing], [], 'every app function used by static HTML handlers must be defined');
 });
+
+test('bill cards HTML-escape bill IDs and station labels before rendering', () => {
+  const start = source.indexOf('function billCard(b)');
+  const end = source.indexOf('function ', start + 10);
+  const fn = source.slice(start, end);
+  assert.match(fn, /escapeHTML\(b\.id\)/, 'bill ID must be escaped');
+  assert.match(fn, /escapeHTML\(b\.stationId\)/, 'station label must be escaped');
+});

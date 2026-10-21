@@ -222,6 +222,18 @@ test('daily archive only archives bills and preserves each bill print state', ()
   assert.match(fn, /b\.businessDay=b\.businessDay\|\|businessDayForTimestamp\(b\.createdAt\)/, 'older bills without a business-day field should get a date without being deleted');
 });
 
+test('manual archive preserves financial records and rolls back on save failure', () => {
+  const start = source.indexOf('function manualArchive(');
+  const end = source.indexOf('function clearHistoryProtected(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /data\.sessions=\[\]/, 'manual archive clears only the visible completed-session list');
+  assert.doesNotMatch(fn, /data\.sales\s*=/, 'manual archive must not replace extra sales');
+  assert.doesNotMatch(fn, /data\.adjustments\s*=/, 'manual archive must not replace cash movements');
+  assert.doesNotMatch(fn, /data\.bills\s*=\s*\[\]/, 'manual archive must not delete bills');
+  assert.match(fn, /const archive=data\.archives\[d\]\?\?=\[\]/, 'completed sessions must be moved into dated archives');
+  assert.match(fn, /if\(!save\(\)\)\{data=JSON\.parse\(previousData\)/, 'failed save must restore the original session list');
+});
+
 test('interrupted print jobs return to the unprinted queue with uncertain status on reload', () => {
   const start = source.indexOf('function normalize(');
   const end = source.indexOf('function save(', start);

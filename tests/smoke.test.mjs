@@ -403,3 +403,41 @@ test('failed save while finishing a session restores the active session and crea
   assert.equal(data.adjustments.length, 0);
   assert.match(h.statuses.at(-1), /could not be saved/);
 });
+
+test('Arabic rerender applies translations without repeatedly saving language settings', () => {
+  const start = source.indexOf('function toggleLanguage(');
+  const end = source.indexOf('function ', start + 10);
+  assert.ok(start >= 0 && end > start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /function toggleLanguage\(force,silent=false\)/);
+  assert.match(fn, /if\(!silent\)\{[\s\S]*?if\(!save\(\)\)/);
+  assert.match(source, /if\(data\.settings\.language==='ar'\)toggleLanguage\('ar',true\)/);
+});
+
+test('main menu starts closed and closes after selecting a section', () => {
+  assert.match(source, /id="mainMenu" class="tabs no-print menu-hidden"/);
+  assert.match(source, /function toggleMainMenu\(\)/);
+  assert.match(source, /menu\.classList\.remove\('menu-open'\);menu\.classList\.add\('menu-hidden'\)/);
+  assert.match(source, /setAttribute\('aria-expanded','false'\)/);
+});
+
+test('bills are rendered into current, printed, unprinted, and archived groups without deletion', () => {
+  const start = source.indexOf('function renderBills(');
+  const end = source.indexOf('function ', start + 10);
+  assert.ok(start >= 0 && end > start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /b\.status!=='printed'/);
+  assert.match(fn, /b\.status==='printed'/);
+  assert.match(fn, /b\.archived\|\|/);
+  assert.match(fn, /id='archivedBills'/);
+  assert.match(fn, /data\.bills\.length/);
+});
+
+test('timed session controls reject zero, negative, and fractional durations', () => {
+  const start = source.indexOf('function startSession(');
+  const end = source.indexOf('function ', start + 10);
+  const fn = source.slice(start, end);
+  assert.match(fn, /Number\(durationMinutes\)<=0/);
+  assert.match(fn, /Number\.isSafeInteger\(Number\(durationMinutes\)\)/);
+  assert.match(fn, /endsAt:duration\?now\+duration\*60000:null/);
+});

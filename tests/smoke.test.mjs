@@ -116,6 +116,13 @@ test('backup and CSV export functions are present', () => {
   }
 });
 
+test('backup restore rejects unsafe sale totals and cash movement amounts', () => {
+  assert.match(source, /Number\.isSafeInteger\(Number\(row\.qty\)\*Number\(row\.unitPrice\)\)/);
+  assert.match(source, /Number\.isSafeInteger\(Number\(row\.total\)\)/);
+  assert.match(source, /Number\.isSafeInteger\(Number\(row\.amount\)\).*Backup contains an invalid cash movement/);
+  assert.match(source, /typeof row\.name!=='string'\|\|!row\.name\.trim\(\)/);
+});
+
 test('restored archived sessions validate dates, rates, duration and charge', () => {
   assert.match(source, /businessDayForTimestamp\(row\.endedAt\)!==archiveDay/);
   assert.match(source, /Backup archive contains an invalid session record/);

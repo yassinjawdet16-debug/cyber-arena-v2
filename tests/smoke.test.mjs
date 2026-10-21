@@ -117,6 +117,20 @@ test('backup and CSV export functions are present', () => {
   }
 });
 
+test('backup restore validates imported data before replacing live data or downloading the safety backup', () => {
+  const start = source.indexOf('function restoreJSON()');
+  const end = source.indexOf('function csvCell(', start);
+  const fn = source.slice(start, end);
+  const validation = fn.indexOf("throw Error('Backup contains an invalid cash movement')");
+  const snapshot = fn.indexOf('const previousData=data;');
+  const backup = fn.indexOf('backupJSON();');
+  const replace = fn.indexOf('data=imported;');
+  assert.ok(validation >= 0 && snapshot > validation, 'all record validation should happen before snapshot/commit');
+  assert.ok(backup > validation && backup < replace, 'safety backup must be downloaded only after validation and before replacement');
+  assert.ok(replace > backup, 'live data replacement must occur after the safety backup');
+  assert.match(fn, /catch\(commitError\)\{data=previousData;/, 'failed commit should restore the prior in-memory data');
+});
+
 test('backup restore reports when the selected file cannot be read', () => {
   const start = source.indexOf('function restoreJSON()');
   const end = source.indexOf('function csvCell(', start);

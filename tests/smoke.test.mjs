@@ -920,6 +920,17 @@ test('backup restore rejects active sessions with invalid station, rate, duratio
   assert.match(fn, /reuses a completed or archived session ID/, 'active IDs must not reuse completed IDs');
 });
 
+test('new backups use version 3 and require a cash movement for each session and sale', () => {
+  assert.match(source, /backupVersion:3/, 'new exports should use the stricter backup format');
+  const start = source.indexOf('function restoreJSON()');
+  const end = source.indexOf('function csvCell(', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /backupVersion>=3/, 'version 3 backups should require complete source cash movements');
+  assert.match(fn, /Version 3 backup is missing a unique cash movement for a completed session/);
+  assert.match(fn, /Version 3 backup is missing a unique cash movement for an extra sale/);
+  assert.match(fn, /backupVersion>3/, 'unknown future backup versions should be rejected');
+});
+
 test('backup restore rejects bills whose business day does not match creation time', () => {
   const start = source.indexOf('function restoreJSON()');
   const end = source.indexOf('function csvCell(', start);

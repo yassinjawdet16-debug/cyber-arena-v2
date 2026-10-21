@@ -721,17 +721,18 @@ test('main menu starts closed and closes after selecting a section', () => {
   assert.match(source, /setAttribute\('aria-expanded','false'\)/);
 });
 
-test('all unprinted bills remain queued across the daily archive; only old printed bills move to archive view', () => {
+test('bill center separates current-day bills from archived receipts without deleting records', () => {
   const start = source.indexOf('function renderBills(');
   const end = source.indexOf('function ', start + 10);
   const fn = source.slice(start, end);
-  assert.match(fn, /const un=data\.bills\.filter\(b=>b\.status!=='printed'\)/, 'unprinted bills must remain in the queue regardless of business day');
-  assert.match(fn, /const livePrinted=data\.bills\.filter\(b=>b\.status==='printed'&&!b\.archived/);
-  assert.match(fn, /const oldPrinted=data\.bills\.filter\(b=>b\.status==='printed'&&\(b\.archived\|\|/);
+  assert.match(fn, /const un=data\.bills\.filter\(b=>b\.status!=='printed'&&!b\.archived&&\(b\.businessDay\|\|businessDayForTimestamp\(b\.createdAt\)\)===day\)/, 'only current business-day unprinted bills belong in the live queue');
+  assert.match(fn, /const livePrinted=data\.bills\.filter\(b=>b\.status==='printed'&&!b\.archived&&\(b\.businessDay\|\|businessDayForTimestamp\(b\.createdAt\)\)===day\)/, 'only current business-day printed bills belong in the live printed area');
+  assert.match(fn, /const archivedBills=data\.bills\.filter\(b=>b\.archived\|\|\(b\.businessDay\|\|businessDayForTimestamp\(b\.createdAt\)\)<day\)/, 'previous-day receipts, including unprinted bills, must remain accessible in the archive area');
   assert.match(fn, /getElementById\('archivedBills'\)/);
   assert.match(fn, /data\.bills\.length/, 'rendering must not delete bill records');
+  assert.match(fn, /No unprinted bills for this business day/);
+  assert.match(fn, /No archived bills or receipts yet/);
 });
-
 test('extending a timed session resets its one-time expiration alert', () => {
   const start = source.indexOf('function extendSession(');
   const end = source.indexOf('function ', start + 10);

@@ -98,7 +98,7 @@ el('backup').addEventListener('click',async()=>{
  try{
   // Always re-read the authoritative cloud revision immediately before export.
   const snapshot=await session.refresh();
-  const pkg=createCloudRecoveryPackage(snapshot);
+  const pkg=createCloudRecoveryPackage({initialized:true,revision:snapshot.revision,state:snapshot.state});
   const payload=JSON.stringify(pkg,null,2);
   const blob=new Blob([payload],{type:'application/json'});
   const url=URL.createObjectURL(blob);

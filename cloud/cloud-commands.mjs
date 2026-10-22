@@ -16,6 +16,27 @@ export const cloudCommands={
   if(!a||!['fixed','percent'].includes(type)||!Number.isFinite(value)||value<0||type==='percent'&&value>100||type==='fixed'&&(!Number.isSafeInteger(value)||value%250!==0))throw Error('Invalid discount');
   a.discountType=type;a.discountValue=value;a.discount=type==='fixed'?value:0;
  }},
+ finish({stationId,endedAt,billId,movementId,businessDay}){
+  return state=>{
+   const a=state.active[stationId],station=state.stations.find(x=>x.id===stationId);
+   if(!a||!station||a.rate!==station.rate)throw Error('Invalid active session');
+   if(!Number.isSafeInteger(endedAt)||endedAt<a.startedAt||!billId||!movementId||billId===movementId)throw Error('Invalid completion');
+   const all=[...state.sessions,...Object.values(state.archives).flat()];
+   if(all.some(x=>x.id===a.id))throw Error('Session already completed');
+   const ids=new Set([...all,...state.bills,...state.adjustments,...state.sales].map(x=>x.id));
+   if(ids.has(billId)||ids.has(movementId))throw Error('Duplicate financial ID');
+   const mins=Math.max(0,(endedAt-a.startedAt)/60000),raw=mins*a.rate/60;
+   const requested=a.discountType==='percent'?raw*(Number(a.discountValue)||0)/100:Number(a.discountValue??a.discount??0);
+   if(!Number.isFinite(raw)||!Number.isFinite(requested)||requested<0)throw Error('Invalid session charge');
+   const discount=Math.min(raw,requested),charge=Math.round(Math.max(0,raw-discount)/250)*250;
+   if(!Number.isSafeInteger(charge))throw Error('Invalid final charge');
+   const session={...a,endedAt,minutes:Math.ceil(mins),rawCharge:Math.round(raw),discount,discountType:a.discountType||'fixed',discountValue:a.discountValue??a.discount??0,charge,completedAt:endedAt,archived:false};
+   state.sessions.unshift(session);
+   delete state.active[stationId];
+   state.bills.unshift({id:billId,sessionId:session.id,stationId,createdAt:endedAt,businessDay,archived:false,kind:'session',minutes:session.minutes,rate:a.rate,rawCharge:session.rawCharge,discount,amount:charge,status:'unprinted',printedAt:null,jobStatus:'not-sent'});
+   state.adjustments.push({id:movementId,date:businessDay,businessDay,at:endedAt,kind:'session',sessionId:session.id,amount:charge,description:'Session '+stationId});
+  };
+ },
  sale({id,movementId,name,qty,price,at,businessDay}){return s=>{
   if(!id||!movementId||id===movementId||!name?.trim()||!Number.isSafeInteger(qty)||qty<=0||!Number.isSafeInteger(price)||price<0||!Number.isSafeInteger(qty*price))throw Error('Invalid sale');
   if([...s.sales,...s.adjustments].some(x=>x.id===id||x.id===movementId))throw Error('Duplicate sale');

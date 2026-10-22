@@ -51,3 +51,10 @@ check('cloud adapter requires authenticated atomic RPC', () => {
  assert.match(schema, /row level security/i);
  assert.doesNotMatch(cloud, /['\"]service_role['\"]\s*:/i);
 });
+
+check('owner Settings tab is PIN gated and relocks', () => {
+ assert.match(html, /let ownerUnlocked=false/);
+ assert.match(html, /btn\.dataset\.tab==='settings'&&!ownerUnlocked/);
+ assert.match(html, /btn\.dataset\.tab!=='settings'\)ownerUnlocked=false/);
+ assert.match(html, /ownerUnlocked=true;closeModal\(\)/);
+});

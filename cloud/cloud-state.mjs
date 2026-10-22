@@ -75,6 +75,7 @@ export function validateCloudState(state){
   if(!completed.has(b.sessionId))fail('Orphan session bill: '+b.id);
   bills.set(b.sessionId,(bills.get(b.sessionId)||0)+1);
   if(!Number.isSafeInteger(b.amount)||b.amount<0||b.amount%250!==0||b.amount!==completed.get(b.sessionId).charge)fail('Bill amount mismatch: '+b.id);
+  if(b.stationId!==undefined&&b.stationId!==completed.get(b.sessionId).stationId)fail('Bill station mismatch: '+b.id);
  }
  for(const m of state.adjustments){
   if(m.kind!=='session'||!m.sessionId)continue;

@@ -19,3 +19,18 @@ test('Baghdad 06:00 cutoff excludes previous-day records',()=>{
 test('unsafe noninteger income fails instead of silently rounding',()=>{
  assert.throws(()=>cloudDailyCashSummary({bills:[{kind:'session',businessDay:'2026-10-22',amount:1.5}],sales:[],adjustments:[]},at),/Invalid session amount/);
 });
+
+test('cash reconciliation detects missing linked movement without counting it as income',()=>{
+ const state={bills:[{kind:'session',businessDay:'2026-10-22',amount:5000}],sales:[],adjustments:[]};
+ const r=cloudDailyCashSummary(state,at);
+ assert.equal(r.net,5000);
+ assert.equal(r.recordedCashMovements,0);
+ assert.equal(r.cashDifference,5000);
+ assert.equal(r.requiresReconciliation,true);
+});
+test('matching income and cash ledger needs no reconciliation',()=>{
+ const state={bills:[{kind:'session',businessDay:'2026-10-22',amount:5000}],sales:[],adjustments:[{kind:'session',sessionId:'s1',businessDay:'2026-10-22',amount:5000}]};
+ const r=cloudDailyCashSummary(state,at);
+ assert.equal(r.cashDifference,0);
+ assert.equal(r.requiresReconciliation,false);
+});

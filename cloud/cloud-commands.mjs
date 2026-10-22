@@ -1,3 +1,4 @@
+import {iraqBusinessDay} from './business-day.mjs';
 // Pure cloud mutations: run only through cloud coordinator, never directly against localStorage.
 export const cloudCommands={
  start({stationId,id,at,minutes=null}){return s=>{
@@ -42,10 +43,7 @@ export const cloudCommands={
   const keep=[];
   for(const session of s.sessions){
    if(typeof session.endedAt!=='number'||session.endedAt>at)throw Error('Invalid session archive time');
-   const d=new Date(session.endedAt);
-   const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(d);
-   const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));
-   const day=new Date(Date.UTC(+p.year,+p.month-1,+p.day-(+p.hour<6?1:0))).toISOString().slice(0,10);
+   const day=iraqBusinessDay(session.endedAt);
    if(day>=businessDay){keep.push(session);continue}
    const archive=s.archives[day]??=[];
    if(archive.some(x=>x.id===session.id))throw Error('Duplicate archived session');

@@ -48,8 +48,8 @@ export function createArenaCloudClient({url,publishableKey,fetchImpl=fetch,timeo
    const rows=await request('/rest/v1/rpc/arena_read_cloud_state',{method:'POST',body:{}});
    if(!Array.isArray(rows))throw new ArenaCloudError('Invalid cloud read response','invalid_response');
    if(rows.length===0)return {initialized:false,revision:0,state:null};
-   if(rows.length!==1||!Number.isSafeInteger(Number(rows[0].revision))||Number(rows[0].revision)<1||!rows[0].state||typeof rows[0].state!=='object')throw new ArenaCloudError('Invalid cloud state','invalid_response');
-   return {initialized:true,revision:Number(rows[0].revision),state:rows[0].state,updatedAt:rows[0].updated_at};
+   if(rows.length!==1||!Number.isSafeInteger(rows[0].revision)||rows[0].revision<1||!rows[0].state||typeof rows[0].state!=='object')throw new ArenaCloudError('Invalid cloud state','invalid_response');
+   return {initialized:true,revision:rows[0].revision,state:rows[0].state,updatedAt:rows[0].updated_at};
   },
   async write(expectedRevision,state){
    requireOwner();
@@ -57,8 +57,8 @@ export function createArenaCloudClient({url,publishableKey,fetchImpl=fetch,timeo
    if(state.settings&&['pin','bridgeToken','bridgeUrl','printerIp'].some(k=>Object.hasOwn(state.settings,k)))throw new ArenaCloudError('Private device settings must not be uploaded','private_settings');
    try{
     const revision=await request('/rest/v1/rpc/arena_write_cloud_state',{method:'POST',body:{p_expected_revision:expectedRevision,p_state:state}});
-    if(!Number.isSafeInteger(Number(revision))||Number(revision)!==expectedRevision+1)throw new ArenaCloudError('Unexpected write response; read cloud state before retrying','uncertain_write');
-    return Number(revision);
+    if(!Number.isSafeInteger(revision)||revision!==expectedRevision+1)throw new ArenaCloudError('Unexpected write response; read cloud state before retrying','uncertain_write');
+    return revision;
    }catch(e){
     if(e instanceof ArenaCloudError&&(e.code==='timeout'||e.code==='network'||e.code==='http_error'))throw new ArenaCloudError(e.message+' Never blindly repeat a write; read the latest revision first.','uncertain_write');
     throw e;

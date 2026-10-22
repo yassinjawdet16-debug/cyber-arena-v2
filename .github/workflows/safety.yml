@@ -34,3 +34,4 @@ jobs:
         run: |
           node tests/safety.test.cjs
           node tests/cloud.test.cjs
+          node tests/finance.test.cjs

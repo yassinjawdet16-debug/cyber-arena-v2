@@ -52,6 +52,17 @@ begin
  if jsonb_typeof(v_stations)<>'array' or jsonb_array_length(v_stations)<>16 then
    raise exception 'State must contain 16 stations';
  end if;
+ -- Validate every station ID, type and rate on the server, not only in browser JS.
+ if exists (
+  select 1 from generate_series(0,15) as n(i)
+  where v_stations->n.i->>'id' <> (
+   case when n.i=0 then 'VIP-01'
+        when n.i<8 then 'PS5-'||lpad((n.i+1)::text,2,'0')
+        else 'PS4-'||lpad((n.i+1)::text,2,'0') end
+  )
+  or v_stations->n.i->>'type' <> (case when n.i=0 then 'VIP' when n.i<8 then 'PS5' else 'PS4' end)
+  or v_stations->n.i->>'rate' <> (case when n.i=0 then '10000' when n.i<8 then '5000' else '3000' end)
+ ) then raise exception 'Station identity or price mismatch'; end if;
  if jsonb_typeof(p_state->'active')<>'object'
  or jsonb_typeof(p_state->'sessions')<>'array'
  or jsonb_typeof(p_state->'archives')<>'object'
@@ -60,7 +71,10 @@ begin
  or jsonb_typeof(p_state->'adjustments')<>'array'
  then raise exception 'State missing required business records'; end if;
  -- Do not store device-specific credentials or owner PIN in cloud state.
- if (p_state->'settings') ?| array['pin','bridgeToken','bridgeUrl'] then
+ if jsonb_typeof(p_state->'settings')<>'object' then
+   raise exception 'Cloud state settings must be an object';
+ end if;
+ if (p_state->'settings') ?| array['pin','bridgeToken','bridgeUrl','printerIp'] then
    raise exception 'Cloud state must not include PIN or bridge credentials';
  end if;
  -- Row lock ensures exactly one writer can commit a given revision.

@@ -35,11 +35,19 @@ export function validateCloudState(state){
   if(!object(record)||typeof record.id!=='string'||!record.id.trim()||ids.has(record.id))fail('Duplicate or invalid '+kind+' ID');
   ids.add(record.id);
  };
- for(const session of allSessions)addId(session,'completed session');
+ for(const session of allSessions){
+  addId(session,'completed session');
+  if(!expectedStations.some(st=>st.id===session.stationId))fail('Invalid completed session station: '+session.id);
+  if(!Number.isSafeInteger(Number(session.endedAt))||Number(session.endedAt)<Number(session.startedAt)||!Number.isSafeInteger(Number(session.startedAt))||Number(session.startedAt)<0)fail('Invalid completed session timestamps: '+session.id);
+  if(!Number.isFinite(Number(session.charge))||Number(session.charge)<0||Number(session.charge)%250!==0)fail('Invalid completed session charge: '+session.id);
+ }
  for(const [stationId,session] of Object.entries(state.active)){
   if(!expectedStations.some(x=>x.id===stationId)||!object(session)||session.stationId!==stationId)fail('Invalid active station');
   if(activeIds.has(stationId))fail('Duplicate active station');
   activeIds.add(stationId);addId(session,'active session');
+  const station=expectedStations.find(x=>x.id===stationId);
+  if(!Number.isSafeInteger(Number(session.startedAt))||Number(session.startedAt)<0||Number(session.rate)!==station.rate)fail('Invalid active session start or rate: '+stationId);
+  if(session.endsAt!==null&&session.endsAt!==undefined&&(!Number.isSafeInteger(Number(session.endsAt))||Number(session.endsAt)<=Number(session.startedAt)))fail('Invalid active session end time: '+stationId);
  }
  for(const kind of ['sales','bills','adjustments'])for(const record of state[kind])addId(record,kind);
  const completed=new Map(allSessions.map(x=>[x.id,x]));

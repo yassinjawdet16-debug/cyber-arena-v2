@@ -24,8 +24,23 @@ function showFinancialSummary(snapshot){
  const report='Business day '+day+' (Baghdad 06:00 cutoff) · Session income '+sessionIncome.toLocaleString('en-US')+' IQD · Sales '+salesIncome.toLocaleString('en-US')+' IQD · Adjustments '+otherAdjustments.toLocaleString('en-US')+' IQD · Net '+net.toLocaleString('en-US')+' IQD'+(requiresReconciliation?' · ⚠ RECONCILE CASH: '+cashDifference.toLocaleString('en-US')+' IQD difference'+(unlinkedSessionMovements?' · '+unlinkedSessionMovements+' unlinked legacy movement(s)':''):'');
  el('financialSummary').textContent=report;
 }
+function showSessionHistory(snapshot){
+ const root=el('sessionHistory');root.replaceChildren();
+ const records=[...snapshot.state.sessions,...Object.values(snapshot.state.archives).flat()]
+  .sort((a,b)=>b.endedAt-a.endedAt).slice(0,30);
+ if(!records.length){root.textContent='No completed sessions in verified cloud records.';return}
+ for(const record of records){
+  const bill=snapshot.state.bills.find(x=>x.sessionId===record.id);
+  const item=document.createElement('p');
+  const charge=Number(record.charge).toLocaleString('en-US');
+  const date=new Date(record.endedAt).toLocaleString('en-GB',{timeZone:'Asia/Baghdad'});
+  item.textContent=record.stationId+' · '+date+' Baghdad · '+charge+' IQD · '+(bill?'Bill '+bill.id+' ('+bill.status+')':'Bill unavailable');
+  root.append(item);
+ }
+}
 function hideUnverifiedCloudView(){
  el('stations').replaceChildren();
+ el('sessionHistory').textContent='Session history locked — refresh required.';
  el('revision').textContent='Cloud view locked — refresh required';
  el('financialSummary').textContent='Cloud totals unavailable until a successful refresh.';
 }
@@ -41,6 +56,7 @@ function render(snapshot){
  const root=el('stations');root.replaceChildren();
  el('revision').textContent='Cloud revision '+snapshot.revision+' · '+Object.keys(snapshot.state.active).length+' active station(s)';
  showFinancialSummary(snapshot);
+ showSessionHistory(snapshot);
  for(const stationId of stations){
   const st=snapshot.state.stations.find(x=>x.id===stationId),active=snapshot.state.active[stationId];
   const card=document.createElement('article');card.className='station';
@@ -65,7 +81,7 @@ async function refresh(){
  const startedEpoch=connectionEpoch;
  busy=true;buttons();
  try{const snapshot=await session.refresh();if(startedEpoch!==connectionEpoch){try{session.lock()}catch(_){}throw Error('Connection changed during refresh; refresh again')}needsRefresh=false;message('Cloud refreshed. Revision '+snapshot.revision,'ok')}
- catch(e){try{session.lock()}catch(_){}el('stations').replaceChildren();el('revision').textContent='Cloud refresh failed — editing locked';el('financialSummary').textContent='Cloud totals unavailable until a successful refresh.';message('Cloud refresh blocked: '+e.message+'. No financial edits allowed.')}
+ catch(e){try{session.lock()}catch(_){}el('stations').replaceChildren();el('sessionHistory').textContent='Session history locked — refresh required.';el('revision').textContent='Cloud refresh failed — editing locked';el('financialSummary').textContent='Cloud totals unavailable until a successful refresh.';message('Cloud refresh blocked: '+e.message+'. No financial edits allowed.')}
  finally{busy=false;buttons()}
 }
 el('login').addEventListener('click',async()=>{
@@ -77,7 +93,7 @@ el('login').addEventListener('click',async()=>{
   session=createCloudUiSession(client,{render,onBlocked:e=>message('Cloud locked: '+e)});
   const snapshot=await session.refresh();if(startedEpoch!==connectionEpoch)throw Error('Connection changed during sign-in; sign in again');needsRefresh=false;
   message('Owner authenticated. Cloud revision '+snapshot.revision,'ok');
- }catch(e){client?.logout();client=null;session=null;needsRefresh=false;el('password').value='';el('stations').replaceChildren();el('revision').textContent='Cloud not connected';el('financialSummary').textContent='Sign in to view verified cloud totals.';message('Login or initial refresh failed: '+e.message)}
+ }catch(e){client?.logout();client=null;session=null;needsRefresh=false;el('password').value='';el('stations').replaceChildren();el('sessionHistory').textContent='Sign in to view completed sessions.';el('revision').textContent='Cloud not connected';el('financialSummary').textContent='Sign in to view verified cloud totals.';message('Login or initial refresh failed: '+e.message)}
  finally{busy=false;buttons()}
 });
 el('refresh').addEventListener('click',refresh);

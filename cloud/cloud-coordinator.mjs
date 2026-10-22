@@ -14,6 +14,8 @@ export function createCloudCoordinator(client){
    try{
     const s=await client.read();
     if(!s.initialized)throw new CloudSyncBlockedError('Initialize cloud before syncing');
+    if(!Number.isSafeInteger(s.revision)||s.revision<1)
+     throw new CloudSyncBlockedError('Invalid cloud revision; editing blocked');
     validateCloudState(s.state);
     snapshot={revision:s.revision,state:clone(s.state)};
     return clone(snapshot);

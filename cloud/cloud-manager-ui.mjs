@@ -16,6 +16,7 @@ function buttons(){
  for(const b of document.querySelectorAll('[data-action]'))b.disabled=!allowed;
  el('refresh').disabled=!session||busy;
  el('backup').disabled=!ready();
+ el('dailyReport').disabled=!ready();
  el('logout').disabled=!client||busy;
  el('login').disabled=busy||Boolean(client);
 }
@@ -113,6 +114,39 @@ el('inspectRecovery').addEventListener('click',async()=>{
   el('recoveryReport').textContent='STRUCTURE VALID (authenticity not verified) · Source revision '+inspected.sourceRevision+' · Completed sessions '+report.completedSessions+' · Active stations '+report.activeSessions+' · Legacy movements '+report.legacyCashMovements+'. Inspection only: NO cloud records changed.';
  }catch(e){el('recoveryReport').textContent='INVALID BACKUP: '+e.message+'. No cloud records changed.'}
  finally{busy=false;buttons();el('inspectRecovery').disabled=!el('recoveryFile').files?.length}
+});
+el('dailyReport').addEventListener('click',async()=>{
+ if(!ready())return;
+ const startedEpoch=connectionEpoch;
+ busy=true;buttons();
+ try{
+  const snapshot=await session.refresh();
+  if(startedEpoch!==connectionEpoch||needsRefresh)throw Error('Connection changed during report refresh');
+  const report=cloudDailyCashSummary(snapshot.state,Date.now());
+  const rows=[
+   ['Metric','Value','Unit'],
+   ['Business day',report.day,'Asia/Baghdad 06:00 cutoff'],
+   ['Cloud revision',snapshot.revision,''],
+   ['Session income',report.sessionIncome,'IQD'],
+   ['Extra sales',report.salesIncome,'IQD'],
+   ['Other adjustments',report.otherAdjustments,'IQD'],
+   ['Expected net',report.net,'IQD'],
+   ['Recorded cash movements',report.recordedCashMovements,'IQD'],
+   ['Cash difference',report.cashDifference,'IQD'],
+   ['Requires reconciliation',report.requiresReconciliation?'YES':'NO',''],
+   ['Unlinked legacy session movements',report.unlinkedSessionMovements,'records']
+  ];
+  const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\\r\\n');
+  const url=URL.createObjectURL(new Blob(['\\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
+  const anchor=document.createElement('a');anchor.href=url;anchor.download='cyber-arena-income-'+report.day+'-r'+snapshot.revision+'.csv';
+  document.body.append(anchor);
+  try{anchor.click()}finally{anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
+  message('Daily report prepared at cloud revision '+snapshot.revision+'. Verify the downloaded file.','ok');
+ }catch(e){
+  try{session?.lock()}catch(_){}
+  hideUnverifiedCloudView();
+  message('Daily report failed: '+e.message+'. Cloud editing locked until refresh.');
+ }finally{busy=false;if(needsRefresh&&session){try{session.lock()}catch(_){}hideUnverifiedCloudView()}buttons()}
 });
 el('backup').addEventListener('click',async()=>{
  if(!ready())return;

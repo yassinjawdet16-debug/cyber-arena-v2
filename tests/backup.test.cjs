@@ -16,4 +16,8 @@ assert.equal(ctx.validateArenaBackup({...good,sales:[{qty:2,unitPrice:500,total:
 assert.equal(ctx.validateArenaBackup({...good,sales:[{qty:2,unitPrice:500,total:1000}]}),true,'Accept valid sale totals');
 assert.equal(ctx.validateArenaBackup({...good,bills:[{amount:-250}]}),false,'Reject negative bill amount');
 assert.equal(ctx.validateArenaBackup({...good,adjustments:[{amount:Infinity}]}),false,'Reject invalid cash movement');
+assert.equal(ctx.validateArenaBackup({...good,sessions:[{charge:-250,endedAt:12345}]}),false,'Reject negative session charge');
+assert.equal(ctx.validateArenaBackup({...good,sessions:[{charge:500,endedAt:Infinity}]}),false,'Reject invalid session timestamp');
+assert.equal(ctx.validateArenaBackup({...good,archives:{'2026-10-22':[{charge:-100,endedAt:12345}]}}),false,'Reject corrupted archived income');
+assert.equal(ctx.validateArenaBackup({...good,sessions:[{charge:500,endedAt:12345}]}),true,'Accept valid completed session');
 console.log('PASS backup structure validation and rejection cases');

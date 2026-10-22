@@ -31,7 +31,7 @@ export function createCloudCoordinator(client){
     // Check the authoritative revision before running the mutation.
     // A second device may have updated the cloud since our last refresh.
     const latest=await client.read();
-    if(!latest.initialized||!Number.isSafeInteger(latest.revision))
+    if(!latest.initialized||!Number.isSafeInteger(latest.revision)||latest.revision<1)
      throw new CloudSyncBlockedError('Cloud is not initialized or revision is invalid');
     validateCloudState(latest.state);
     if(latest.revision!==snapshot.revision)
@@ -42,6 +42,8 @@ export function createCloudCoordinator(client){
     const result=mutate(next);
     if(result&&typeof result.then==='function')throw new CloudSyncBlockedError('Async mutators prohibited');
     const safe=prepareCloudState(next);
+    if(snapshot.revision===Number.MAX_SAFE_INTEGER)
+     throw new CloudSyncBlockedError('Cloud revision limit reached; writing blocked');
     const revision=await client.write(snapshot.revision,safe);
     if(revision!==snapshot.revision+1)throw new CloudSyncBlockedError('Unexpected revision');
     snapshot={revision,state:clone(safe)};

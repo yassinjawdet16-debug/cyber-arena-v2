@@ -375,5 +375,6 @@ function tick(){const expired=Object.values(data.active).filter(a=>a.endsAt&&a.e
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){archiveEligible(false);tick()}});
 archiveEligible(false);renderAll();if(storageLoadError)setStatus('🔴 Saved data could not be read. Changes are blocked to avoid overwriting it; restore a valid JSON backup in Backup & Data Management.');if(['ar','ku'].includes(data.settings.language))toggleLanguage(data.settings.language,true);setInterval(tick,1000);setInterval(()=>archiveEligible(false),30000);
 </script>
+<aside id="cloudSafetyPanel" style="margin:20px auto;max-width:900px;padding:14px;border:1px solid #45516a;border-radius:12px;background:#121a2c;color:#f2f5ff;font:14px system-ui"><strong>☁️ Cloud synchronization — not yet enabled</strong><p style="margin:8px 0">This café manager currently saves records on this device only. Do not operate the same café independently on two devices until cloud migration and testing are complete.</p><p style="margin:8px 0">Developer tools: <a href="./cloud-migration.html" style="color:#31e6a1">Cloud migration</a> · <a href="./cloud-recovery.html" style="color:#31e6a1">Owner recovery</a> · <a href="./cloud-operations.html" style="color:#31e6a1">Cloud transaction test console</a>. These are separate tools, not live synchronization.</p></aside>
 </body>
 </html>

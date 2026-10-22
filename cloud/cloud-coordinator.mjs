@@ -34,6 +34,8 @@ export function createCloudCoordinator(client){
     validateCloudState(latest.state);
     if(latest.revision!==snapshot.revision)
      throw new CloudSyncBlockedError('Cloud changed on another device. Refresh and review before editing');
+    if(JSON.stringify(latest.state)!==JSON.stringify(snapshot.state))
+     throw new CloudSyncBlockedError('Cloud content changed without revision. Refresh and review before editing');
     const next=clone(latest.state);
     const result=mutate(next);
     if(result&&typeof result.then==='function')throw new CloudSyncBlockedError('Async mutators prohibited');

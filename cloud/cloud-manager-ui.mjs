@@ -127,6 +127,7 @@ function argsFor(action,stationId){
   case 'finish':return ['finish',{stationId,endedAt:at,billId:newId(),movementId:newId(),businessDay}];
   case 'sale':return ['sale',{id:newId(),movementId:newId(),name:el('product').value.trim(),qty:safeNumber('qty'),price:safeNumber('price'),at,businessDay}];
   case 'cash':return ['cash',{id:newId(),amount:safeNumber('amount'),description:el('description').value.trim(),at,businessDay}];
+  case 'archive':return ['archive',{businessDay,at}];
   default:throw Error('Unsupported operation');
  }
 }

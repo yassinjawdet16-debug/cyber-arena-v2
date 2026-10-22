@@ -744,7 +744,7 @@ test('Arabic rerender applies translations without repeatedly saving language se
   const fn = source.slice(start, end);
   assert.match(fn, /function toggleLanguage\(force,silent=false\)/);
   assert.match(fn, /if\(!silent\)\{[\s\S]*?if\(!save\(\)\)/);
-  assert.match(source, /if\(data\.settings\.language==='ar'\)toggleLanguage\('ar',true\)/);
+  assert.match(source, /if\(\['ar','ku'\]\.includes\(data\.settings\.language\)\)toggleLanguage\(data\.settings\.language,true\)/);
 });
 
 test('main menu starts closed and closes after selecting a section', () => {

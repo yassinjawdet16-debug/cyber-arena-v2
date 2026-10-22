@@ -9,7 +9,7 @@ export const cloudCommands={
   s.active[stationId]={id,stationId,startedAt:at,rate:st.rate,durationMinutes:minutes,endsAt:minutes===null?null:at+minutes*60000,discount:0};
  }},
  extend({stationId,minutes,at}){return s=>{
-  const a=s.active[stationId];if(!a||a.endsAt===null||!Number.isSafeInteger(minutes)||minutes<=0)throw Error('Invalid extension');
+  const a=s.active[stationId];if(!a||a.endsAt===null||!Number.isSafeInteger(minutes)||minutes<=0||!Number.isSafeInteger(at)||at<a.startedAt||!Number.isSafeInteger(Math.max(a.endsAt,at)+minutes*60000))throw Error('Invalid extension');
   a.endsAt=Math.max(a.endsAt,at)+minutes*60000;a.durationMinutes=Math.ceil((a.endsAt-a.startedAt)/60000);
  }},
  discount({stationId,type,value}){return s=>{
@@ -21,7 +21,7 @@ export const cloudCommands={
   return state=>{
    const a=state.active[stationId],station=state.stations.find(x=>x.id===stationId);
    if(!a||!station||a.rate!==station.rate)throw Error('Invalid active session');
-   if(!Number.isSafeInteger(endedAt)||endedAt<a.startedAt||!billId||!movementId||billId===movementId)throw Error('Invalid completion');
+   if(!Number.isSafeInteger(endedAt)||endedAt<a.startedAt||!billId||!movementId||billId===movementId||!/^(?:\\d{4})-(?:\\d{2})-(?:\\d{2})$/.test(businessDay)||businessDay!==iraqBusinessDay(endedAt))throw Error('Invalid completion');
    const all=[...state.sessions,...Object.values(state.archives).flat()];
    if(all.some(x=>x.id===a.id)||state.bills.some(x=>x.sessionId===a.id)||state.adjustments.some(x=>x.kind==='session'&&x.sessionId===a.id))throw Error('Session already completed or billed');
    const ids=new Set([...all,...state.bills,...state.adjustments,...state.sales].map(x=>x.id));
@@ -39,7 +39,7 @@ export const cloudCommands={
   };
  },
  archive({businessDay,at}){return s=>{
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(businessDay)||!Number.isSafeInteger(at)||at<0)throw Error('Invalid archive request');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(businessDay)||!Number.isSafeInteger(at)||at<0||businessDay!==iraqBusinessDay(at))throw Error('Invalid archive request');
   const keep=[];
   for(const session of s.sessions){
    if(typeof session.endedAt!=='number'||session.endedAt>at)throw Error('Invalid session archive time');

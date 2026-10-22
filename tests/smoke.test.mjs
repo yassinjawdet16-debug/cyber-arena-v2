@@ -1313,3 +1313,16 @@ test('backup inspection never restores, saves, or sends data to the network', ()
  assert.doesNotMatch(code,/localStorage\.setItem|\bsave\s*\(|\bfetch\s*\(|\brestoreJSON\s*\(/);
  assert.ok(html.includes('onclick="inspectBackupJSON()"'));
 });
+
+test('cloud SQL restricts state reads/writes to owners and rejects stale revisions', () => {
+ const sql=readFileSync(resolve(here,'../supabase/001_cloud_state.sql'),'utf8');
+ assert.match(sql,/enable row level security/);
+ assert.match(sql,/revoke all on public\.arena_cloud_state from anon, authenticated/);
+ assert.match(sql,/auth\.uid\(\)/);
+ assert.match(sql,/arena_is_owner\(\)/);
+ assert.match(sql,/for update/);
+ assert.match(sql,/v_revision<>p_expected_revision/);
+ assert.match(sql,/Cloud revision conflict/);
+ assert.match(sql,/updated_by=auth\.uid\(\)/);
+ assert.match(sql,/Cloud state must not include PIN or bridge credentials/);
+});

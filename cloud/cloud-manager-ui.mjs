@@ -59,7 +59,7 @@ async function refresh(){
  if(!session)throw Error('Owner sign-in required');
  busy=true;buttons();
  try{const snapshot=await session.refresh();needsRefresh=false;message('Cloud refreshed. Revision '+snapshot.revision,'ok')}
- catch(e){message('Cloud refresh blocked: '+e.message+'. No financial edits allowed.')}
+ catch(e){el('stations').replaceChildren();el('revision').textContent='Cloud refresh failed — editing locked';el('financialSummary').textContent='Cloud totals unavailable until a successful refresh.';message('Cloud refresh blocked: '+e.message+'. No financial edits allowed.')}
  finally{busy=false;buttons()}
 }
 el('login').addEventListener('click',async()=>{

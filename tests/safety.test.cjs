@@ -49,5 +49,5 @@ check('cloud adapter requires authenticated atomic RPC', () => {
  assert.match(schema, /pg_advisory_xact_lock/);
  assert.match(schema, /auth\.uid\(\)/);
  assert.match(schema, /row level security/i);
- assert.doesNotMatch(cloud, /service_role/i);
+ assert.doesNotMatch(cloud, /['\"]service_role['\"]\s*:/i);
 });

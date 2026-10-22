@@ -37,6 +37,24 @@ export const cloudCommands={
    state.adjustments.push({id:movementId,date:businessDay,businessDay,at:endedAt,kind:'session',sessionId:session.id,amount:charge,description:'Session '+stationId});
   };
  },
+ archive({businessDay,at}){return s=>{
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(businessDay)||!Number.isSafeInteger(at)||at<0)throw Error('Invalid archive request');
+  const keep=[];
+  for(const session of s.sessions){
+   if(typeof session.endedAt!=='number'||session.endedAt>at)throw Error('Invalid session archive time');
+   const d=new Date(session.endedAt);
+   const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(d);
+   const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));
+   const day=new Date(Date.UTC(+p.year,+p.month-1,+p.day-(+p.hour<6?1:0))).toISOString().slice(0,10);
+   if(day>=businessDay){keep.push(session);continue}
+   const archive=s.archives[day]??=[];
+   if(archive.some(x=>x.id===session.id))throw Error('Duplicate archived session');
+   archive.push({...session,archived:true});s.archives[day]=archive;
+  }
+  s.sessions=keep;
+  for(const bill of s.bills){if(bill.businessDay&&bill.businessDay<businessDay){bill.archived=true;bill.archivedAt=at}}
+  s.lastArchiveDay=businessDay;
+ }},
  sale({id,movementId,name,qty,price,at,businessDay}){return s=>{
   if(!id||!movementId||id===movementId||!name?.trim()||!Number.isSafeInteger(qty)||qty<=0||!Number.isSafeInteger(price)||price<0||!Number.isSafeInteger(qty*price)||!Number.isSafeInteger(at)||at<0||!/^\d{4}-\d{2}-\d{2}$/.test(businessDay))throw Error('Invalid sale');
   if([...s.sales,...s.adjustments].some(x=>x.id===id||x.id===movementId))throw Error('Duplicate sale');

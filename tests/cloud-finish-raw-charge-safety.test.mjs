@@ -1,14 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {cloudCommands} from '../cloud/cloud-commands.mjs';
+import {iraqBusinessDay} from '../cloud/business-day.mjs';
 const station={id:'VIP-01',type:'VIP',rate:10000};
 const state=()=>({stations:[station],active:{},sessions:[],archives:{},bills:[],sales:[],adjustments:[]});
 test('reject unsafe raw charge even with 100 percent discount, without partial billing',()=>{
  const s=state();
  cloudCommands.start({stationId:'VIP-01',id:'session-1',at:0})(s);
  cloudCommands.discount({stationId:'VIP-01',type:'percent',value:100})(s);
- const endedAt=Number.MAX_SAFE_INTEGER-1;
- assert.throws(()=>cloudCommands.finish({stationId:'VIP-01',endedAt,billId:'bill-1',movementId:'movement-1',businessDay:'1970-01-01'})(s),/Invalid completion|Invalid session charge/);
+ const endedAt=8_000_000_000_000_000;
+ assert.throws(()=>cloudCommands.finish({stationId:'VIP-01',endedAt,billId:'bill-1',movementId:'movement-1',businessDay:iraqBusinessDay(endedAt)})(s),/Invalid session charge/);
  assert.equal(s.sessions.length,0);assert.equal(s.bills.length,0);assert.equal(s.adjustments.length,0);
  assert.ok(s.active['VIP-01']);
 });

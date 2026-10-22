@@ -50,6 +50,7 @@ export function validateCloudState(state){
   if(!Number.isSafeInteger(session.startedAt)||session.startedAt<0||session.rate!==station.rate)fail('Invalid active session start or rate: '+stationId);
   if(session.endsAt!==null&&session.endsAt!==undefined&&(!Number.isSafeInteger(session.endsAt)||session.endsAt<=session.startedAt))fail('Invalid active session end time: '+stationId);
   if(session.durationMinutes!==undefined&&session.durationMinutes!==null&&(!Number.isSafeInteger(session.durationMinutes)||session.durationMinutes<=0||session.endsAt===null||session.endsAt===undefined))fail('Invalid timed session duration: '+stationId);
+  if(session.endsAt!==null&&session.endsAt!==undefined&&session.durationMinutes!==undefined&&session.durationMinutes!==null&&Math.ceil((session.endsAt-session.startedAt)/60000)!==session.durationMinutes)fail('Timed session duration/end mismatch: '+stationId);
  }
  for(const kind of ['sales','bills','adjustments'])for(const record of state[kind])addId(record,kind);
  // Validate every ledger row, including archived-day rows, before a dashboard can trust totals.

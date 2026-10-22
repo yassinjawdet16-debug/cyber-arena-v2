@@ -120,7 +120,7 @@ check('cloud operations reject active session snapshots', () => {
 
 check('Arabic Badini Sorani language selector and right-to-left support', () => {
  const lang=fs.readFileSync(path.join(__dirname,'..','i18n','languages.js'),'utf8');
- for(const code of ['ar','badini','sorani'])assert.match(lang,new RegExp(code+':\\\\{'));
+ for(const code of ['ar','badini','sorani'])assert.ok(lang.includes(code+':{'),code+' dictionary missing');
  assert.match(lang,/current==='badini'\?'ku'/);
  assert.match(lang,/current==='ar'\|\|current==='sorani'\|\|current==='badini'\?'rtl'/);
  assert.match(html,/id="arenaLanguage"/);

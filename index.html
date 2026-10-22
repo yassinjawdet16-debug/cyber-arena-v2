@@ -72,6 +72,7 @@
    <div class="card"><h3>🖨️ Daily report</h3><p class="muted">Print a simple text-style report.</p><button onclick="printDailyReport()">Print daily report</button></div>
   </div>
   <div class="card" style="margin-top:14px"><h3>All-time totals</h3><div class="stats"><div class="stat"><span>Session income</span><b id="allSessionIncome">0 IQD</b></div><div class="stat"><span>Extra sales</span><b id="allSalesIncome">0 IQD</b></div><div class="stat"><span>Archived sessions</span><b id="archiveCount">0</b></div><div class="stat"><span>All bills</span><b id="allBillCount">0</b></div></div></div>
+  <div class="card" style="margin-top:14px"><h3>🛡️ Financial integrity check</h3><p class="muted">Read-only check of completed sessions, linked bills, and cash movements. No data is changed.</p><button type="button" onclick="auditFinancialRecords()">Check financial records</button><pre id="financialAuditResults" aria-live="polite" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></div>
  </section>
 
  <section id="settings" class="section">
@@ -160,6 +161,50 @@ function openCashAdjustment(){openForm('Cash adjustment',`<label>Description</la
 function cashMovementBusinessDay(a){if(a.businessDay)return a.businessDay;const ts=Number(a.at??a.createdAt);return Number.isFinite(ts)?businessDayForTimestamp(ts):a.date}function renderCash(){const today=baghdadDayStart();const sessionSum=allSessions().filter(s=>businessDayForTimestamp(s.endedAt)===today).reduce((a,s)=>a+s.charge,0);const salesSum=data.sales.filter(s=>(s.businessDay||businessDayForTimestamp(s.createdAt))===today).reduce((a,s)=>a+s.total,0);const adj=data.adjustments.filter(a=>cashMovementBusinessDay(a)===today&&a.kind==='adjustment').reduce((a,x)=>a+x.amount,0);document.getElementById('cashSessions').textContent=money(sessionSum);document.getElementById('cashSales').textContent=money(salesSum);document.getElementById('cashAdjustments').textContent=money(adj);document.getElementById('cashTotal').textContent=money(sessionSum+salesSum+adj);document.getElementById('cashMovements').innerHTML=data.adjustments.filter(a=>cashMovementBusinessDay(a)===today).sort((a,b)=>Number(b.at??b.createdAt??0)-Number(a.at??a.createdAt??0)).map(a=>`<div class="row" style="border-bottom:1px solid var(--line);padding:8px 0"><span>${baghdadDateTime(a.at??a.createdAt)} — ${escapeHTML(a.description)}</span><b>${money(a.amount)}</b></div>`).join('')||'<div class="empty">No cash movements today.</div>'}
 function renderSales(){document.getElementById('salesTable').innerHTML=data.sales.length?`<div class="tablewrap"><table><thead><tr><th>Time (Iraq)</th><th>Product</th><th>Qty</th><th>Unit</th><th>Total</th></tr></thead><tbody>${data.sales.map(s=>`<tr><td>${baghdadDateTime(s.createdAt)}</td><td>${escapeHTML(s.name)}</td><td>${s.qty}</td><td>${money(s.unitPrice)}</td><td>${money(s.total)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No extra sales recorded yet.</div>'}
 function allSessions(){const seen=new Set();return [...data.sessions,...Object.values(data.archives).flat()].filter((session,index)=>{const key=session&&session.id?String(session.id):`legacy-${index}`;if(seen.has(key))return false;seen.add(key);return true})}
+function auditFinancialRecords(){
+ const sessions=allSessions(),bills=data.bills||[],movements=data.adjustments||[];
+ const issues=[];
+ const sessionIds=new Set();
+ const billsBySession=new Map(),movementsBySession=new Map();
+ for(const b of bills){
+  if(b.kind!=='session')continue;
+  const id=String(b.sessionId||'');
+  if(!billsBySession.has(id))billsBySession.set(id,[]);
+  billsBySession.get(id).push(b);
+ }
+ for(const m of movements){
+  if(m.kind!=='session'||!m.sessionId)continue;
+  const id=String(m.sessionId);
+  if(!movementsBySession.has(id))movementsBySession.set(id,[]);
+  movementsBySession.get(id).push(m);
+ }
+ let checked=0,legacy=0;
+ for(const s of sessions){
+  checked++;
+  if(!s||!s.id){issues.push('Completed session has no ID.');continue}
+  if(sessionIds.has(s.id)){issues.push('Duplicate session '+s.id);continue}
+  sessionIds.add(s.id);
+  const linkedBills=billsBySession.get(s.id)||[];
+  if(linkedBills.length!==1){issues.push('Session '+s.id+' has '+linkedBills.length+' linked bills.');continue}
+  if(Number(linkedBills[0].amount)!==Number(s.charge))issues.push('Bill amount differs from session '+s.id);
+  const linkedMovements=movementsBySession.get(s.id)||[];
+  if(linkedMovements.length===0){
+   const candidates=movements.filter(m=>m.kind==='session'&&!m.sessionId&&m.description==='Session '+s.stationId&&cashMovementBusinessDay(m)===businessDayForTimestamp(s.endedAt));
+   if(candidates.length===1){
+    legacy++;
+    if(Number(candidates[0].amount)!==Number(s.charge))issues.push('Legacy cash amount differs from session '+s.id);
+   }else issues.push('Session '+s.id+' has '+candidates.length+' possible legacy cash movements.');
+  }else if(linkedMovements.length!==1)issues.push('Session '+s.id+' has '+linkedMovements.length+' cash movements.');
+  else if(Number(linkedMovements[0].amount)!==Number(s.charge))issues.push('Cash amount differs from session '+s.id);
+ }
+ for(const [id,rows] of billsBySession)if(!sessionIds.has(id))issues.push('Orphan session bill: '+id);
+ for(const [id,rows] of movementsBySession)if(!sessionIds.has(id))issues.push('Orphan session cash movement: '+id);
+ const result=document.getElementById('financialAuditResults');
+ const summary=issues.length?'🔴 '+issues.length+' potential financial inconsistency(s). Export a backup before editing records.':'🟢 No inconsistencies found in checked records.';
+ result.textContent=[summary,'Completed sessions checked: '+checked,'Legacy cash movements matched: '+legacy,...issues.slice(0,30),...(issues.length>30?['Additional issues omitted: '+(issues.length-30)]:[]),'This is a local read-only consistency check, not a bank reconciliation.'].join('\n');
+ setStatus(issues.length?'🔴 Financial audit found possible mismatches; review the Reports tab.':'🟢 Financial audit completed. No mismatches found in checked records.');
+ return {checked,legacy,issues};
+}
 function renderReports(){const sessions=allSessions();document.getElementById('allSessionIncome').textContent=money(sessions.reduce((a,s)=>a+s.charge,0));document.getElementById('allSalesIncome').textContent=money(data.sales.reduce((a,s)=>a+s.total,0));const archivedIds=new Set();let archivedTotal=0;for(const rows of Object.values(data.archives)){for(const row of rows){const key=row&&row.id?String(row.id):null;if(key){if(archivedIds.has(key))continue;archivedIds.add(key)}archivedTotal++}}document.getElementById('archiveCount').textContent=archivedTotal;document.getElementById('allBillCount').textContent=data.bills.length}
 function renderStats(){const today=baghdadDayStart();const sessions=allSessions().filter(s=>businessDayForTimestamp(s.endedAt)===today);document.getElementById('todayIncome').textContent=money(sessions.reduce((a,s)=>a+s.charge,0));document.getElementById('todaySales').textContent=money(data.sales.filter(s=>(s.businessDay||businessDayForTimestamp(s.createdAt))===today).reduce((a,s)=>a+s.total,0))}
 function renderAll(){renderReceiptDesigner();renderStations();renderBills();renderHistory();renderCash();renderSales();renderReports();renderStats();const pinWarning=document.getElementById('defaultPinWarning');if(pinWarning)pinWarning.style.display=data.settings.pin==='1234'?'block':'none';document.getElementById('bridgeUrl').value=data.settings.bridgeUrl||'';document.getElementById('bridgeToken').value=data.settings.bridgeToken||'';document.getElementById('printerIp').value=data.settings.printerIp||'192.168.1.41';if(data.settings.language==='ar')toggleLanguage('ar',true)}

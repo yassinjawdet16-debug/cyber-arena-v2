@@ -15,9 +15,22 @@ function buttons(){
  el('logout').disabled=!client||busy;
  el('login').disabled=busy;
 }
+function showFinancialSummary(snapshot){
+ const state=snapshot.state,day=iraqBusinessDay(Date.now());
+ const sessionBills=state.bills.filter(b=>b.kind==='session'&&b.businessDay===day);
+ const sales=state.sales.filter(s=>s.businessDay===day);
+ const adjustments=state.adjustments.filter(a=>a.businessDay===day);
+ const sum=rows=>rows.reduce((total,row)=>total+Number(row.amount||0),0);
+ const sessionIncome=sessionBills.reduce((total,b)=>total+Number(b.amount||0),0);
+ const salesIncome=sales.reduce((total,s)=>total+Number(s.total||0),0);
+ const otherCash=sum(adjustments.filter(a=>a.kind==='adjustment'));
+ const report='Business day '+day+' (Baghdad 06:00 cutoff) · Session income '+sessionIncome.toLocaleString('en-US')+' IQD · Sales '+salesIncome.toLocaleString('en-US')+' IQD · Adjustments '+otherCash.toLocaleString('en-US')+' IQD · Net '+(sessionIncome+salesIncome+otherCash).toLocaleString('en-US')+' IQD';
+ el('financialSummary').textContent=report;
+}
 function render(snapshot){
  const root=el('stations');root.replaceChildren();
  el('revision').textContent='Cloud revision '+snapshot.revision+' · '+Object.keys(snapshot.state.active).length+' active station(s)';
+ showFinancialSummary(snapshot);
  for(const stationId of stations){
   const st=snapshot.state.stations.find(x=>x.id===stationId),active=snapshot.state.active[stationId];
   const card=document.createElement('article');card.className='station';

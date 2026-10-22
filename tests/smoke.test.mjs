@@ -1256,3 +1256,15 @@ test('archived bills remain actionable and are grouped separately from current-d
   assert.match(render, /b\.status==='printed'&&!b\.archived&&\(b\.businessDay\|\|businessDayForTimestamp\(b\.createdAt\)\)===day/, 'only current-day printed bills belong in the live printed list');
   assert.match(render, /b\.archived\|\|\(b\.businessDay\|\|businessDayForTimestamp\(b\.createdAt\)\)<day/, 'archived and older-day bills remain visible in the archive list');
 });
+
+test('session cash movements retain an immutable session identifier for discount reconciliation', () => {
+ const finish=source.slice(source.indexOf('function finishSession('),source.indexOf('function extendSession('));
+ assert.match(finish,/kind:'session',sessionId:sess\.id,amount:sess\.charge/);
+});
+test('completed discount edits update only the linked cash movement or safely reject ambiguous legacy records', () => {
+ const edit=source.slice(source.indexOf('function editCompletedDiscount('),source.indexOf('function renderHistory('));
+ assert.match(edit,/m\.kind==='session'&&m\.sessionId===id/);
+ assert.match(edit,/legacy\.length===1/);
+ assert.match(edit,/linkedMovements\.length!==1/);
+ assert.match(edit,/linkedMovements\[0\]\.amount=final/);
+});

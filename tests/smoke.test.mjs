@@ -1281,3 +1281,15 @@ test('financial integrity audit remains read-only and verifies linked receipts a
  assert.match(audit,/Orphan session cash movement/);
  assert.doesNotMatch(audit,/\bsave\s*\(/);
 });
+
+test('active sessions support fixed and percentage discounts calculated at finish time', () => {
+ const edit=source.slice(source.indexOf('function editDiscount('),source.indexOf('function openQuickStart('));
+ assert.match(edit,/activeDiscountType/);
+ assert.match(edit,/discountType==='percent'&&discount>100/);
+ assert.match(edit,/a\.discountType=discountType/);
+ assert.match(edit,/a\.discountValue=discount/);
+ const finish=source.slice(source.indexOf('function finishSession('),source.indexOf('function extendSession('));
+ assert.match(finish,/a\.discountType==='percent'/);
+ assert.match(finish,/rawPreview\.raw\*\(Number\(a\.discountValue\)\|\|0\)\/100/);
+ assert.match(finish,/discountType:a\.discountType\|\|'fixed'/);
+});

@@ -12,4 +12,8 @@ assert.equal(ctx.validateArenaBackup({...good,stations:good.stations.slice(1)}),
 assert.equal(ctx.validateArenaBackup({...good,bills:null}),false);
 assert.equal(ctx.validateArenaBackup({...good,archives:{yesterday:null}}),false);
 assert.equal(ctx.validateArenaBackup({...good,stations:good.stations.map((s,i)=>i? s:{...s,rate:1})}),false);
+assert.equal(ctx.validateArenaBackup({...good,sales:[{qty:2,unitPrice:500,total:900}]}),false,'Reject mismatched sale totals');
+assert.equal(ctx.validateArenaBackup({...good,sales:[{qty:2,unitPrice:500,total:1000}]}),true,'Accept valid sale totals');
+assert.equal(ctx.validateArenaBackup({...good,bills:[{amount:-250}]}),false,'Reject negative bill amount');
+assert.equal(ctx.validateArenaBackup({...good,adjustments:[{amount:Infinity}]}),false,'Reject invalid cash movement');
 console.log('PASS backup structure validation and rejection cases');

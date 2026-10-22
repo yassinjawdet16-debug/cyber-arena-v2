@@ -7,7 +7,7 @@ let client=null,session=null,busy=false;
 const newId=()=>crypto.randomUUID();
 const safeNumber=id=>Number(el(id).value);
 const message=(text,level='error')=>{el('status').textContent=text;el('status').dataset.level=level};
-const ready=()=>Boolean(session?.status().ready)&&!busy;
+const ready=()=>Boolean(session?.status().ready)&&!busy&&navigator.onLine!==false;
 function buttons(){
  const allowed=ready();
  for(const b of document.querySelectorAll('[data-action]'))b.disabled=!allowed;
@@ -90,3 +90,23 @@ document.addEventListener('click',async event=>{
  }finally{busy=false;buttons()}
 });
 buttons();
+
+// A disconnected browser must not offer financial writes from a stale snapshot.
+// Coming back online requires an explicit fresh read before editing.
+window.addEventListener('offline',()=>{
+ if(session&&!busy){try{session.lock()}catch(_){}}
+ message('OFFLINE: Cloud editing disabled. Reconnect and refresh before making financial changes.');
+ buttons();
+});
+window.addEventListener('online',()=>{
+ if(session&&!busy){try{session.lock()}catch(_){}}
+ message('Connection restored. Refresh cloud and review the latest records before editing.');
+ buttons();
+});
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden&&session&&!busy){
+  try{session.lock()}catch(_){}
+  message('App resumed. Refresh cloud before editing to check for changes from another device.');
+  buttons();
+ }
+});

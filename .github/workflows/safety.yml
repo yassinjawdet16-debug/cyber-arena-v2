@@ -31,4 +31,6 @@ jobs:
           node --check cloud/cloud-sync.js
           node --check i18n/languages.js
       - name: Run safety checks
-        run: node tests/safety.test.cjs
+        run: |
+          node tests/safety.test.cjs
+          node tests/cloud.test.cjs

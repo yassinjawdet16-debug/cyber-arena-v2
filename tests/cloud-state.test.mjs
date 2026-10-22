@@ -46,3 +46,9 @@ test('cloud state rejects active sessions with wrong rate or countdown',()=>{
  bad.active['PS5-02'].rate=5000;bad.active['PS5-02'].endsAt=500;
  assert.throws(()=>prepareCloudState(bad),/Invalid active session end time/);
 });
+
+test('cloud state rejects a completed session still marked active',()=>{
+ const local=sample();
+ local.active['VIP-01']={id:'S1',stationId:'VIP-01',startedAt:1000,rate:10000,endsAt:null};
+ assert.throws(()=>prepareCloudState(local),/Duplicate or invalid active session ID|Session is both active and completed/);
+});

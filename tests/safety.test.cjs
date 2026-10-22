@@ -32,7 +32,7 @@ check('manual receipt printing and print bridge controls', () => {
 });
 check('archive and backup controls exist', () => {
   assert.match(html, /function manualArchive\s*\(/);
-  assert.match(html, /function (?:exportBackup|downloadBackup|backupData)\s*\(/);
+  assert.match(html, /function (?:backupJSON|exportBackup|downloadBackup|backupData)\s*\(/);
 });
 check('no unexpected remote JavaScript imports', () => {
   assert.doesNotMatch(html, /<script[^>]+src=["']https?:\/\//i);

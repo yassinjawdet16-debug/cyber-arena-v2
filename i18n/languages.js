@@ -22,7 +22,7 @@ function translate(){
   else if(current==='en'&&trimmed!==base)node.nodeValue=raw.replace(trimmed,base);
  }
  document.documentElement.lang=current==='badini'?'ku':current==='sorani'?'ckb':current;
- document.documentElement.dir=current==='ar'||current==='sorani'?'rtl':'ltr';
+ document.documentElement.dir=current==='ar'||current==='sorani'||current==='badini'?'rtl':'ltr';
 }
 window.setArenaLanguage=function(language){
  if(!['en','ar','badini','sorani'].includes(language))return;
@@ -34,5 +34,5 @@ try{current=localStorage.getItem('cyberArenaV2_language')||'en'}catch(e){}
 if(!dictionary[current])current='en';
 document.getElementById('arenaLanguage').value=current;
 translate();
-new MutationObserver(()=>{if(current!=='en')translate()}).observe(document.body,{childList:true,subtree:true,characterData:false});
+new MutationObserver(()=>{if(current!=='en')translate()}).observe(document.body,{childList:true,subtree:true,characterData:true});
 })();

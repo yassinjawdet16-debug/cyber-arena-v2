@@ -45,6 +45,7 @@ test('cloud client rejects private PIN and bridge credentials',async()=>{
  await client.login('owner@example.com','x');
  await assert.rejects(client.write(0,{...state,settings:{pin:'1234'}}),e=>e.code==='private_settings');
  await assert.rejects(client.write(0,{...state,settings:{bridgeToken:'secret'}}),e=>e.code==='private_settings');
+ await assert.rejects(client.write(0,{...state,settings:{printerIp:'192.168.1.41'}}),e=>e.code==='private_settings');
 });
 test('uncertain network writes must not be blindly retried',async()=>{
  const base=mock();

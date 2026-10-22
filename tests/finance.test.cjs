@@ -3,7 +3,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const html=fs.readFileSync('index.html','utf8');
 const round=html.match(/function round250\(n\)\{[^}]+\}/);
-const charge=html.match(/function chargeFor\(station,startedAt,endedAt,discount=0\)\{[^}]+\}/);
+const charge=html.match(/function chargeFor\(station,startedAt,endedAt,discount=0\)\{[^\n]+\}/);
 assert.ok(round&&charge,'Financial calculation functions must exist');
 const context={};vm.runInNewContext(round[0]+';'+charge[0],context);
 function equalCharge(rate,minutes,discount,expected){

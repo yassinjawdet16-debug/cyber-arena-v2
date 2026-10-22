@@ -22,7 +22,7 @@ export const cloudCommands={
    if(!a||!station||a.rate!==station.rate)throw Error('Invalid active session');
    if(!Number.isSafeInteger(endedAt)||endedAt<a.startedAt||!billId||!movementId||billId===movementId)throw Error('Invalid completion');
    const all=[...state.sessions,...Object.values(state.archives).flat()];
-   if(all.some(x=>x.id===a.id))throw Error('Session already completed');
+   if(all.some(x=>x.id===a.id)||state.bills.some(x=>x.sessionId===a.id)||state.adjustments.some(x=>x.kind==='session'&&x.sessionId===a.id))throw Error('Session already completed or billed');
    const ids=new Set([...all,...state.bills,...state.adjustments,...state.sales].map(x=>x.id));
    if(ids.has(billId)||ids.has(movementId))throw Error('Duplicate financial ID');
    const mins=Math.max(0,(endedAt-a.startedAt)/60000),raw=mins*a.rate/60;

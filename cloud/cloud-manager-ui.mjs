@@ -94,7 +94,7 @@ el('inspectRecovery').addEventListener('click',async()=>{
   const pkg=JSON.parse(await file.text());
   const inspected=inspectCloudRecoveryPackage(pkg);
   const report=inspected.report;
-  el('recoveryReport').textContent='VALID BACKUP · Source revision '+inspected.sourceRevision+' · Completed sessions '+report.completedSessions+' · Active stations '+report.activeSessions+' · Legacy movements '+report.legacyCashMovements+'. Inspection only: NO cloud records changed.';
+  el('recoveryReport').textContent='STRUCTURE VALID (authenticity not verified) · Source revision '+inspected.sourceRevision+' · Completed sessions '+report.completedSessions+' · Active stations '+report.activeSessions+' · Legacy movements '+report.legacyCashMovements+'. Inspection only: NO cloud records changed.';
  }catch(e){el('recoveryReport').textContent='INVALID BACKUP: '+e.message+'. No cloud records changed.'}
  finally{busy=false;buttons();el('inspectRecovery').disabled=!el('recoveryFile').files?.length}
 });

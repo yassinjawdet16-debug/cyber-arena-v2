@@ -1,6 +1,7 @@
 import {createArenaCloudClient} from './arena-cloud-client.mjs';
 import {createCloudUiSession} from './cloud-ui-session.mjs';
 import {iraqBusinessDay} from './business-day.mjs';
+import {cloudDailyCashSummary} from './cloud-cash-summary.mjs';
 const el=id=>document.getElementById(id);
 const stations=Array.from({length:16},(_,i)=>i===0?'VIP-01':(i<8?'PS5-':'PS4-')+String(i+1).padStart(2,'0'));
 let client=null,session=null,busy=false;
@@ -16,15 +17,8 @@ function buttons(){
  el('login').disabled=busy;
 }
 function showFinancialSummary(snapshot){
- const state=snapshot.state,day=iraqBusinessDay(Date.now());
- const sessionBills=state.bills.filter(b=>b.kind==='session'&&b.businessDay===day);
- const sales=state.sales.filter(s=>s.businessDay===day);
- const adjustments=state.adjustments.filter(a=>a.businessDay===day);
- const sum=rows=>rows.reduce((total,row)=>total+Number(row.amount||0),0);
- const sessionIncome=sessionBills.reduce((total,b)=>total+Number(b.amount||0),0);
- const salesIncome=sales.reduce((total,s)=>total+Number(s.total||0),0);
- const otherCash=sum(adjustments.filter(a=>a.kind==='adjustment'));
- const report='Business day '+day+' (Baghdad 06:00 cutoff) · Session income '+sessionIncome.toLocaleString('en-US')+' IQD · Sales '+salesIncome.toLocaleString('en-US')+' IQD · Adjustments '+otherCash.toLocaleString('en-US')+' IQD · Net '+(sessionIncome+salesIncome+otherCash).toLocaleString('en-US')+' IQD';
+ const {day,sessionIncome,salesIncome,otherAdjustments,net,unlinkedSessionMovements}=cloudDailyCashSummary(snapshot.state,Date.now());
+ const report='Business day '+day+' (Baghdad 06:00 cutoff) · Session income '+sessionIncome.toLocaleString('en-US')+' IQD · Sales '+salesIncome.toLocaleString('en-US')+' IQD · Adjustments '+otherAdjustments.toLocaleString('en-US')+' IQD · Net '+net.toLocaleString('en-US')+' IQD'+(unlinkedSessionMovements?' · WARNING: '+unlinkedSessionMovements+' unlinked legacy session movement(s)':'');
  el('financialSummary').textContent=report;
 }
 function render(snapshot){

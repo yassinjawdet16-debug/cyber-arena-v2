@@ -1342,3 +1342,18 @@ test('cloud SQL checks every station rate and blocks device-specific settings', 
  assert.match(sql,/Station identity or price mismatch/);
  assert.match(sql,/bridgeToken','bridgeUrl','printerIp/);
 });
+
+test('cloud migration page initializes only an empty revision-zero snapshot', () => {
+ const migration=readFileSync(resolve(here,'../cloud-migration.html'),'utf8');
+ assert.match(migration,/revision!==0/);
+ assert.match(migration,/latest\.initialized\|\|latest\.revision!==0/);
+ assert.match(migration,/client\.write\(0,prepared\)/);
+ assert.match(migration,/NEVER blindly retry/);
+ assert.match(migration,/prepareCloudState\(parsed\)/);
+});
+test('cloud SQL verifies exact station identity and excludes device-specific printer credentials', () => {
+ const sql=readFileSync(resolve(here,'../supabase/001_cloud_state.sql'),'utf8');
+ assert.match(sql,/Station identity or price mismatch/);
+ assert.match(sql,/printerIp/);
+ assert.match(sql,/Cloud revision conflict/);
+});

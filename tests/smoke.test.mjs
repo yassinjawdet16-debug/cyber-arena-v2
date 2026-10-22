@@ -786,7 +786,7 @@ test('timed session controls reject zero, negative, and fractional durations', (
 test('global status messages are announced accessibly and use outcome colors', () => {
   assert.match(html, /<div(?=[^>]*id="globalStatus")(?=[^>]*role="status")(?=[^>]*aria-live="polite")(?=[^>]*aria-atomic="true")[^>]*>/);
   assert.match(source, /function setStatus\(msg,kind=''\)/);
-  assert.match(source, /el\.textContent=msg/);
+  assert.match(source, /el\.textContent=translateDynamic\(msg\)/);
   assert.match(source, /String\(msg\)\.startsWith\('🟢'\)\?'green'/);
   assert.match(source, /String\(msg\)\.startsWith\('🔴'\)\?'red'/);
   assert.match(source, /String\(msg\)\.startsWith\('⚠️'\)\|\|String\(msg\)\.startsWith\('🟠'\)\?'gold'/);

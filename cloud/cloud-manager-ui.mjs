@@ -17,8 +17,8 @@ function buttons(){
  el('login').disabled=busy;
 }
 function showFinancialSummary(snapshot){
- const {day,sessionIncome,salesIncome,otherAdjustments,net,unlinkedSessionMovements}=cloudDailyCashSummary(snapshot.state,Date.now());
- const report='Business day '+day+' (Baghdad 06:00 cutoff) · Session income '+sessionIncome.toLocaleString('en-US')+' IQD · Sales '+salesIncome.toLocaleString('en-US')+' IQD · Adjustments '+otherAdjustments.toLocaleString('en-US')+' IQD · Net '+net.toLocaleString('en-US')+' IQD'+(unlinkedSessionMovements?' · WARNING: '+unlinkedSessionMovements+' unlinked legacy session movement(s)':'');
+ const {day,sessionIncome,salesIncome,otherAdjustments,net,unlinkedSessionMovements,cashDifference,requiresReconciliation}=cloudDailyCashSummary(snapshot.state,Date.now());
+ const report='Business day '+day+' (Baghdad 06:00 cutoff) · Session income '+sessionIncome.toLocaleString('en-US')+' IQD · Sales '+salesIncome.toLocaleString('en-US')+' IQD · Adjustments '+otherAdjustments.toLocaleString('en-US')+' IQD · Net '+net.toLocaleString('en-US')+' IQD'+(requiresReconciliation?' · ⚠ RECONCILE CASH: '+cashDifference.toLocaleString('en-US')+' IQD difference'+(unlinkedSessionMovements?' · '+unlinkedSessionMovements+' unlinked legacy movement(s)':''):'');
  el('financialSummary').textContent=report;
 }
 function render(snapshot){

@@ -78,3 +78,9 @@ check('blank inputs and manual bill amounts are validated', () => {
  assert.match(html, /adjAmount'\)\.value\.trim\(\)/);
  assert.match(html, /Number\.isSafeInteger\(amount\)\|\|amount<=0/);
 });
+
+check('archive uses the Baghdad business day boundary', () => {
+ assert.match(html, /const now=new Date\(\),cutoffDay=baghdadDayStart\(now\)/);
+ assert.match(html, /if\(force\|\|day<cutoffDay\)/);
+ assert.doesNotMatch(html, /day<today&&day<cutoffDay/);
+});

@@ -11,7 +11,7 @@ const id=()=>crypto.randomUUID();
 async function refresh(){if(!coordinator)throw Error('Sign in first');const s=await coordinator.refresh();el('status').textContent='Cloud revision '+s.revision+', active stations '+Object.keys(s.state.active).length;return s}
 el('login').onclick=async()=>{try{const client=createArenaCloudClient({url:el('url').value.trim(),publishableKey:el('key').value.trim()});await client.login(el('email').value.trim(),el('password').value);el('password').value='';coordinator=createCloudCoordinator(client);runner=createCloudActionRunner(coordinator);await refresh();show('Owner authenticated.')}catch(e){coordinator=null;runner=null;show('Login failed: '+e.message)}};
 el('refresh').onclick=async()=>{try{await refresh();show('Cloud refreshed.')}catch(e){show('Refresh failed: '+e.message)}};
-async function run(name,args){if(!runner)throw Error('Sign in first');const s=await runner.execute(name,args);el('status').textContent='Committed revision '+s.revision;show('Committed '+name+'. Do not repeat this transaction.')}
+async function run(name,args){if(!runner)throw Error('Sign in first');if(!confirm('This test action will modify connected Supabase records. Have you backed up the cloud and confirmed this is a safe test project?'))throw Error('Cancelled by owner');const s=await runner.execute(name,args);el('status').textContent='Committed revision '+s.revision;show('Committed '+name+'. Do not repeat this transaction.')}
 el('apply').onclick=async()=>{try{const stationId=el('station').value,action=el('action').value,n=Number(el('number').value),at=Date.now(),businessDay=dateKey(at);
 if(action==='start')await run('start',{stationId,id:id(),at});
 else if(action==='startTimed')await run('start',{stationId,id:id(),at,minutes:n});

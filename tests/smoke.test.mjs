@@ -1301,3 +1301,15 @@ test('legacy cash reconciliation uses completion-time proximity to avoid linking
   assert.match(part,/Math\.abs\(Number\(m\.at\)-Number\(s\.endedAt\)\)<=120000/);
  }
 });
+
+test('backup inspection never restores, saves, or sends data to the network', () => {
+ const start=source.indexOf('function inspectBackupJSON(');
+ const end=source.indexOf('function restoreJSON(',start);
+ assert.ok(start>=0&&end>start);
+ const code=source.slice(start,end);
+ assert.match(code,/DEFAULT_STATIONS/);
+ assert.match(code,/backup\.archives/);
+ assert.match(code,/Duplicate or missing linked session bill ID/);
+ assert.doesNotMatch(code,/localStorage\.setItem|\bsave\s*\(|\bfetch\s*\(|\brestoreJSON\s*\(/);
+ assert.ok(html.includes('onclick="inspectBackupJSON()"'));
+});

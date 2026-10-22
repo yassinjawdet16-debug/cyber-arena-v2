@@ -4,7 +4,7 @@ export const cloudCommands={
  start({stationId,id,at,minutes=null}){return s=>{
   const st=s.stations.find(x=>x.id===stationId);
   if(!st||s.active[stationId])throw Error('Station unavailable');
-  if(!id||!Number.isSafeInteger(at)||at<0||minutes!==null&&(!Number.isSafeInteger(minutes)||minutes<=0))throw Error('Invalid session');
+  if(!id||!Number.isSafeInteger(at)||at<0||minutes!==null&&(!Number.isSafeInteger(minutes)||minutes<=0||!Number.isSafeInteger(at+minutes*60000)))throw Error('Invalid session');
   if([...s.sessions,...Object.values(s.active),...Object.values(s.archives).flat(),...s.bills,...s.sales,...s.adjustments].some(x=>x.id===id))throw Error('Duplicate session');
   s.active[stationId]={id,stationId,startedAt:at,rate:st.rate,durationMinutes:minutes,endsAt:minutes===null?null:at+minutes*60000,discount:0};
  }},

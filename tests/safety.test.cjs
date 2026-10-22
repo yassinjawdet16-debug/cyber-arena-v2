@@ -41,3 +41,13 @@ check('no unexpected remote JavaScript imports', () => {
   assert.doesNotMatch(html, /<script[^>]+src=["']https?:\/\//i);
 });
 if (!process.exitCode) console.log('Cyber Arena V2 safety checks passed.');
+
+check('cloud adapter requires authenticated atomic RPC', () => {
+ const cloud = fs.readFileSync(path.join(__dirname, '..', 'cloud', 'cloud-sync.js'), 'utf8');
+ const schema = fs.readFileSync(path.join(__dirname, '..', 'supabase', 'schema.sql'), 'utf8');
+ assert.match(cloud, /rpc\/arena_save_snapshot/);
+ assert.match(schema, /pg_advisory_xact_lock/);
+ assert.match(schema, /auth\.uid\(\)/);
+ assert.match(schema, /row level security/i);
+ assert.doesNotMatch(cloud, /service_role/i);
+});

@@ -20,7 +20,7 @@ export function validateCloudState(state){
  if(!Array.isArray(state.stations)||state.stations.length!==16)fail('Exactly 16 stations required');
  state.stations.forEach((st,i)=>{
   const expected=expectedStations[i];
-  if(!object(st)||st.id!==expected.id||st.type!==expected.type||Number(st.rate)!==expected.rate)fail('Station order or rate mismatch: '+expected.id);
+  if(!object(st)||st.id!==expected.id||st.type!==expected.type||st.rate!==expected.rate)fail('Station order or rate mismatch: '+expected.id);
  });
  for(const name of REQUIRED_ARRAYS)if(!Array.isArray(state[name]))fail('Invalid '+name+' array');
  if(!object(state.active)||!object(state.archives)||!object(state.settings))fail('Invalid active sessions, archives, or settings');
@@ -38,7 +38,7 @@ export function validateCloudState(state){
  for(const session of allSessions){
   addId(session,'completed session');
   if(!expectedStations.some(st=>st.id===session.stationId))fail('Invalid completed session station: '+session.id);
-  if(!Number.isSafeInteger(Number(session.endedAt))||Number(session.endedAt)<Number(session.startedAt)||!Number.isSafeInteger(Number(session.startedAt))||Number(session.startedAt)<0)fail('Invalid completed session timestamps: '+session.id);
+  if(!Number.isSafeInteger(session.endedAt)||!Number.isSafeInteger(session.startedAt)||session.endedAt<session.startedAt||session.startedAt<0)fail('Invalid completed session timestamps: '+session.id);
   if(!Number.isSafeInteger(session.charge)||session.charge<0||session.charge%250!==0)fail('Invalid completed session charge: '+session.id);
  }
  for(const [stationId,session] of Object.entries(state.active)){
@@ -46,8 +46,8 @@ export function validateCloudState(state){
   if(activeIds.has(stationId))fail('Duplicate active station');
   activeIds.add(stationId);addId(session,'active session');
   const station=expectedStations.find(x=>x.id===stationId);
-  if(!Number.isSafeInteger(Number(session.startedAt))||Number(session.startedAt)<0||Number(session.rate)!==station.rate)fail('Invalid active session start or rate: '+stationId);
-  if(session.endsAt!==null&&session.endsAt!==undefined&&(!Number.isSafeInteger(Number(session.endsAt))||Number(session.endsAt)<=Number(session.startedAt)))fail('Invalid active session end time: '+stationId);
+  if(!Number.isSafeInteger(session.startedAt)||session.startedAt<0||session.rate!==station.rate)fail('Invalid active session start or rate: '+stationId);
+  if(session.endsAt!==null&&session.endsAt!==undefined&&(!Number.isSafeInteger(session.endsAt)||session.endsAt<=session.startedAt))fail('Invalid active session end time: '+stationId);
  }
  for(const kind of ['sales','bills','adjustments'])for(const record of state[kind])addId(record,kind);
  const completed=new Map(allSessions.map(x=>[x.id,x]));

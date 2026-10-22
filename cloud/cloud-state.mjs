@@ -51,6 +51,14 @@ export function validateCloudState(state){
  }
  for(const kind of ['sales','bills','adjustments'])for(const record of state[kind])addId(record,kind);
  const completed=new Map(allSessions.map(x=>[x.id,x]));
+ // A completed session must not remain active on another device.
+ for(const session of Object.values(state.active)){
+  if(completed.has(session.id))fail('Session is both active and completed: '+session.id);
+ }
+ // A single station cannot have two different active session entries.
+ for(const session of Object.values(state.active)){
+  if(!expectedStations.some(x=>x.id===session.stationId))fail('Unknown active station');
+ }
  const bills=new Map(),movements=new Map();
  for(const b of state.bills){
   if(b.kind!=='session')continue;

@@ -58,3 +58,9 @@ check('owner Settings tab is PIN gated and relocks', () => {
  assert.match(html, /btn\.dataset\.tab!=='settings'\)ownerUnlocked=false/);
  assert.match(html, /ownerUnlocked=true;closeModal\(\)/);
 });
+
+check('daily archive catches missed 6 AM minute', () => {
+ assert.match(html, /data\.lastArchiveDay!==baghdadDayStart\(now\)\)archiveEligible\(false\)/);
+ assert.doesNotMatch(html, /Number\(p\.hour\)===6&&Number\(p\.minute\)===0/);
+ assert.match(html, /timeZone:'Asia\/Baghdad'/);
+});

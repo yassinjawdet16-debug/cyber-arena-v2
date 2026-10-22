@@ -54,7 +54,7 @@ export function createArenaCloudClient({url,publishableKey,fetchImpl=fetch,timeo
   async write(expectedRevision,state){
    requireOwner();
    if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0||!state||typeof state!=='object'||Array.isArray(state))throw new ArenaCloudError('Invalid write arguments','configuration');
-   if(state.settings&&['pin','bridgeToken','bridgeUrl'].some(k=>Object.hasOwn(state.settings,k)))throw new ArenaCloudError('Private device settings must not be uploaded','private_settings');
+   if(state.settings&&['pin','bridgeToken','bridgeUrl','printerIp'].some(k=>Object.hasOwn(state.settings,k)))throw new ArenaCloudError('Private device settings must not be uploaded','private_settings');
    try{
     const revision=await request('/rest/v1/rpc/arena_write_cloud_state',{method:'POST',body:{p_expected_revision:expectedRevision,p_state:state}});
     if(!Number.isSafeInteger(Number(revision))||Number(revision)!==expectedRevision+1)throw new ArenaCloudError('Unexpected write response; read cloud state before retrying','uncertain_write');

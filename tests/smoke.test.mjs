@@ -1387,3 +1387,12 @@ test('language switch preserves nested controls and translates live station card
  assert.match(source,/t\('Start'\)/);
  assert.match(fn,/renderStations\(\)/);
 });
+
+test('receipts, modal content, and status messages use three-language dynamic translations',()=>{
+ assert.match(source,/function translateDynamic\(message\)/);
+ assert.match(source,/function translateDialogContent\(root\)/);
+ assert.match(source,/el\.textContent=translateDynamic\(msg\)/);
+ assert.match(source,/modalTitle'\)\.textContent=translateDynamic\(title\)/);
+ assert.match(source,/translateDynamic\('Hourly rate'\)/);
+ assert.match(source,/translateDynamic\('TOTAL'\)/);
+});

@@ -104,7 +104,7 @@ el('backup').addEventListener('click',async()=>{
 el('logout').addEventListener('click',()=>{
  if(busy)return;
  try{session?.lock()}catch(_){}
- client?.logout();client=null;session=null;needsRefresh=false;el('revision').textContent='Cloud not connected';el('stations').replaceChildren();
+ client?.logout();client=null;session=null;needsRefresh=false;el('revision').textContent='Cloud not connected';el('stations').replaceChildren();el('financialSummary').textContent='Sign in to view verified cloud totals.';el('recoveryReport').textContent='No recovery file inspected.';el('recoveryFile').value='';el('inspectRecovery').disabled=true;
  message('Signed out. Cloud editing disabled.','ok');buttons();
 });
 function argsFor(action,stationId){

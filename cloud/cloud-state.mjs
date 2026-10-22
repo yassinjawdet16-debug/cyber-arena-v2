@@ -51,7 +51,10 @@ export function validateCloudState(state){
  }
  for(const kind of ['sales','bills','adjustments'])for(const record of state[kind])addId(record,kind);
  // Validate every ledger row, including archived-day rows, before a dashboard can trust totals.
- for(const sale of state.sales)if(!Number.isSafeInteger(sale.total)||sale.total<0)fail('Invalid sale total: '+sale.id);
+ for(const sale of state.sales){
+  if(!Number.isSafeInteger(sale.total)||sale.total<0)fail('Invalid sale total: '+sale.id);
+  if(!Number.isSafeInteger(sale.qty)||sale.qty<=0||!Number.isSafeInteger(sale.unitPrice)||sale.unitPrice<0||!Number.isSafeInteger(sale.qty*sale.unitPrice)||sale.qty*sale.unitPrice!==sale.total)fail('Sale quantity, unit price or total mismatch: '+sale.id);
+ }
  for(const movement of state.adjustments)if(!Number.isSafeInteger(movement.amount))fail('Invalid cash movement amount: '+movement.id);
  const completed=new Map(allSessions.map(x=>[x.id,x]));
  // A completed session must not remain active on another device.

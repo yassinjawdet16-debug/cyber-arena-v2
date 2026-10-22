@@ -71,3 +71,10 @@ check('financial inputs reject unsafe values', () => {
  assert.match(html, /Number\.isSafeInteger\(qty\*price\)/);
  assert.match(html, /Number\.isSafeInteger\(amount\)\|\|amount===0/);
 });
+
+check('blank inputs and manual bill amounts are validated', () => {
+ assert.match(html, /saleQty'\)\.value\.trim\(\)/);
+ assert.match(html, /salePrice'\)\.value\.trim\(\)/);
+ assert.match(html, /adjAmount'\)\.value\.trim\(\)/);
+ assert.match(html, /Number\.isSafeInteger\(amount\)\|\|amount<=0/);
+});

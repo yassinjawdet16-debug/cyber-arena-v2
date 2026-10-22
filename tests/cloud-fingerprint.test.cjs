@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const html=fs.readFileSync('index.html','utf8');
+const start=html.indexOf('function cloudSnapshotFingerprint(');
+const end=html.indexOf('\nasync function cloudUpload(',start);
+assert.ok(start>=0&&end>start,'Cloud snapshot comparison missing');
+const ctx={clone:x=>JSON.parse(JSON.stringify(x)),Object,JSON,Array};
+vm.runInNewContext(html.slice(start,end),ctx);
+const a={version:2,settings:{pin:'1234',bridgeToken:'secret',bridgeUrl:'local',theme:'dark'},stations:[{id:'VIP-01',rate:10000}],sales:[{qty:2,total:1000}],archives:{'2026-10-21':[{charge:5000,id:'a'}]}};
+const b={archives:{'2026-10-21':[{id:'a',charge:5000}]},sales:[{total:1000,qty:2}],stations:[{rate:10000,id:'VIP-01'}],settings:{theme:'dark'},version:2};
+assert.equal(ctx.cloudSnapshotFingerprint(a),ctx.cloudSnapshotFingerprint(b),'Key ordering and local secrets must not affect cloud comparison');
+assert.notEqual(ctx.cloudSnapshotFingerprint(a),ctx.cloudSnapshotFingerprint({...b,sales:[{total:1250,qty:2}]}),'Financial differences must be detected');
+assert.notEqual(ctx.cloudSnapshotFingerprint(a),ctx.cloudSnapshotFingerprint({...b,archives:{}}),'Missing archives must be detected');
+assert.notEqual(ctx.cloudSnapshotFingerprint(a),ctx.cloudSnapshotFingerprint({...b,stations:[{rate:3000,id:'VIP-01'}]}),'Station rate differences must be detected');
+console.log('PASS cloud snapshot canonical comparison and financial conflict detection');

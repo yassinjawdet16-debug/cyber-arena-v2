@@ -9,7 +9,7 @@ export const cloudCommands={
   s.active[stationId]={id,stationId,startedAt:at,rate:st.rate,durationMinutes:minutes,endsAt:minutes===null?null:at+minutes*60000,discount:0};
  }},
  extend({stationId,minutes,at}){return s=>{
-  const a=s.active[stationId];if(!a||a.endsAt===null||!Number.isSafeInteger(minutes)||minutes<=0||!Number.isSafeInteger(at)||at<a.startedAt||!Number.isSafeInteger(Math.max(a.endsAt,at)+minutes*60000))throw Error('Invalid extension');
+  const a=s.active[stationId];if(!a||!Number.isSafeInteger(a.endsAt)||!Number.isSafeInteger(a.startedAt)||!Number.isSafeInteger(minutes)||minutes<=0||!Number.isSafeInteger(at)||at<a.startedAt||!Number.isSafeInteger(Math.max(a.endsAt,at)+minutes*60000))throw Error('Invalid extension');
   a.endsAt=Math.max(a.endsAt,at)+minutes*60000;a.durationMinutes=Math.ceil((a.endsAt-a.startedAt)/60000);
  }},
  discount({stationId,type,value}){return s=>{

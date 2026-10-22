@@ -84,3 +84,7 @@ check('archive uses the Baghdad business day boundary', () => {
  assert.match(html, /if\(force\|\|day<cutoffDay\)/);
  assert.doesNotMatch(html, /day<today&&day<cutoffDay/);
 });
+
+check('overnight sessions are classified by business day', () => {
+ assert.match(html, /const day=baghdadDayStart\(new Date\(s\.endedAt\)\);if\(force\|\|day<cutoffDay\)/);
+});

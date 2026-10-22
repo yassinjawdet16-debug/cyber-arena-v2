@@ -105,7 +105,7 @@ el('backup').addEventListener('click',async()=>{
   // Always re-read the authoritative cloud revision immediately before export.
   const startedEpoch=connectionEpoch;
   const snapshot=await session.refresh();
-  if(startedEpoch!==connectionEpoch||needsRefresh)throw Error('Connection changed during backup; refresh and export again');
+  if(startedEpoch!==connectionEpoch||needsRefresh){try{session.lock()}catch(_){}hideUnverifiedCloudView();throw Error('Connection changed during backup; refresh and export again')}
   const pkg=createCloudRecoveryPackage({initialized:true,revision:snapshot.revision,state:snapshot.state});
   const payload=JSON.stringify(pkg,null,2);
   const blob=new Blob([payload],{type:'application/json'});

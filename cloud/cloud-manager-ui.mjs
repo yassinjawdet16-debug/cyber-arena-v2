@@ -116,7 +116,7 @@ el('backup').addEventListener('click',async()=>{
   document.body.append(anchor);
   try{anchor.click()}finally{anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
   message('Backup prepared for download at cloud revision '+pkg.sourceRevision+'. Verify it is saved before relying on it.','ok');
- }catch(e){message('Backup export failed: '+e.message+'. No cloud records changed.')}
+ }catch(e){try{session?.lock()}catch(_){}hideUnverifiedCloudView();message('Backup export failed: '+e.message+'. Cloud editing locked until refresh. No cloud records changed.')}
  finally{busy=false;if(needsRefresh&&session){try{session.lock()}catch(_){}hideUnverifiedCloudView()}buttons()}
 });
 el('logout').addEventListener('click',()=>{

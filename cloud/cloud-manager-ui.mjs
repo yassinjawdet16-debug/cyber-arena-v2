@@ -24,6 +24,11 @@ function showFinancialSummary(snapshot){
  const report='Business day '+day+' (Baghdad 06:00 cutoff) · Session income '+sessionIncome.toLocaleString('en-US')+' IQD · Sales '+salesIncome.toLocaleString('en-US')+' IQD · Adjustments '+otherAdjustments.toLocaleString('en-US')+' IQD · Net '+net.toLocaleString('en-US')+' IQD'+(requiresReconciliation?' · ⚠ RECONCILE CASH: '+cashDifference.toLocaleString('en-US')+' IQD difference'+(unlinkedSessionMovements?' · '+unlinkedSessionMovements+' unlinked legacy movement(s)':''):'');
  el('financialSummary').textContent=report;
 }
+function hideUnverifiedCloudView(){
+ el('stations').replaceChildren();
+ el('revision').textContent='Cloud view locked — refresh required';
+ el('financialSummary').textContent='Cloud totals unavailable until a successful refresh.';
+}
 function updateCountdowns(){
  const now=Date.now();
  for(const node of document.querySelectorAll('[data-countdown]')){
@@ -112,7 +117,7 @@ el('backup').addEventListener('click',async()=>{
   try{anchor.click()}finally{anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
   message('Backup prepared for download at cloud revision '+pkg.sourceRevision+'. Verify it is saved before relying on it.','ok');
  }catch(e){message('Backup export failed: '+e.message+'. No cloud records changed.')}
- finally{busy=false;if(needsRefresh&&session){try{session.lock()}catch(_){}}buttons()}
+ finally{busy=false;if(needsRefresh&&session){try{session.lock()}catch(_){}hideUnverifiedCloudView()}buttons()}
 });
 el('logout').addEventListener('click',()=>{
  if(busy)return;
@@ -156,6 +161,7 @@ setInterval(updateCountdowns,1000);
 function invalidateCloudView(text){
  connectionEpoch++;
  needsRefresh=true;
+ hideUnverifiedCloudView();
  if(session&&!busy){try{session.lock()}catch(_){}}
  message(text);
  buttons();

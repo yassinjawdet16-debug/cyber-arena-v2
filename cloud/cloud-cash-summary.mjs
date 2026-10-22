@@ -16,13 +16,18 @@ export function cloudDailyCashSummary(state,at){
  const otherAdjustments=sum(cash.filter(x=>x.kind==='adjustment'),x=>x.amount,'adjustment');
  const movementSession=sum(cash.filter(x=>x.kind==='session'&&x.sessionId),x=>x.amount,'session movement');
  const movementSales=sum(cash.filter(x=>x.kind==='sale'),x=>x.amount,'sale movement');
+ // Aggregate equality can conceal offsetting errors between individual sales.
+ const saleMovementAmounts=cash.filter(x=>x.kind==='sale').map(x=>x.amount).sort((a,b)=>a-b);
+ const saleAmounts=sales.map(x=>x.total).sort((a,b)=>a-b);
+ const saleMovementsMismatch=saleAmounts.length!==saleMovementAmounts.length||saleAmounts.some((value,i)=>value!==saleMovementAmounts[i]);
  // Legacy imported records may lack linked cash movements; do not infer cash paid.
  const unlinkedSessionMovements=cash.filter(x=>x.kind==='session'&&!x.sessionId);
  const net=amount(sessionIncome+salesIncome+otherAdjustments,'net');
  const recordedCashMovements=amount(movementSession+movementSales+otherAdjustments,'recorded cash');
  const cashDifference=amount(net-recordedCashMovements,'cash difference');
  return Object.freeze({day,sessionIncome,salesIncome,otherAdjustments,net,
-  recordedCashMovements,cashDifference,requiresReconciliation:cashDifference!==0||unlinkedSessionMovements.length>0,
+  recordedCashMovements,cashDifference,requiresReconciliation:cashDifference!==0||unlinkedSessionMovements.length>0||saleMovementsMismatch,
+  saleMovementsMismatch,
   unlinkedSessionMovements:unlinkedSessionMovements.length,
   sessionBills:bills.length,salesCount:sales.length});
 }

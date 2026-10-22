@@ -21,7 +21,7 @@ export const cloudCommands={
   return state=>{
    const a=state.active[stationId],station=state.stations.find(x=>x.id===stationId);
    if(!a||!station||a.rate!==station.rate)throw Error('Invalid active session');
-   if(!Number.isSafeInteger(endedAt)||endedAt<a.startedAt||!billId||!movementId||billId===movementId||!/^(?:\\d{4})-(?:\\d{2})-(?:\\d{2})$/.test(businessDay)||businessDay!==iraqBusinessDay(endedAt))throw Error('Invalid completion');
+   if(!Number.isSafeInteger(endedAt)||endedAt<a.startedAt||!billId||!movementId||billId===movementId||!/^(?:\\d{4})-(?:\\d{2})-(?:\\d{2})$/.test(businessDay))throw Error('Invalid completion');
    const all=[...state.sessions,...Object.values(state.archives).flat()];
    if(all.some(x=>x.id===a.id)||state.bills.some(x=>x.sessionId===a.id)||state.adjustments.some(x=>x.kind==='session'&&x.sessionId===a.id))throw Error('Session already completed or billed');
    const ids=new Set([...all,...state.bills,...state.adjustments,...state.sales].map(x=>x.id));

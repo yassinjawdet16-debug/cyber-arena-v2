@@ -110,3 +110,10 @@ check('cloud sync requires a known baseline and refuses divergent snapshots', ()
  assert.match(html, /cloudSession\.baseline=\{revision:remote\.revision,fingerprint:cloudSnapshotFingerprint\(remote\.payload\)\}/);
  assert.match(html, /adapter\.save\(data,remote\.revision\)/);
 });
+
+check('cloud operations reject active session snapshots', () => {
+ assert.match(html, /End active sessions before cloud upload/);
+ assert.match(html, /Cloud snapshot contains active sessions/);
+ assert.match(html, /End active sessions before recovering/);
+ assert.match(html, /End active sessions before syncing/);
+});

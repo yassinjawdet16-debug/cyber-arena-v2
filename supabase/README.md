@@ -11,11 +11,12 @@ Status: FOUNDATION ONLY. Not live or ready for production. iPhone printer integr
 
 ## Migration
 1. Verify the correct Supabase project and authenticated owner membership in public.arena_members.
-2. Back up the database before running migrations.
-3. Review supabase/001_cloud_state.sql, then run it in the Supabase SQL Editor.
-4. Confirm an anonymous user cannot call either RPC and an authenticated non-owner cannot read or write.
-5. Verify the authenticated owner can read an empty result; no state is initialized automatically.
-6. Never copy the service-role key into browser HTML.
+2. Run the read-only `supabase/000_preflight_readonly.sql` in the SQL Editor and review every result. Do not install the migration if any required table/column fails or an existing cloud object needs review.
+3. Back up the database before running migrations. A local website JSON backup is not a substitute for a database backup.
+4. Review supabase/001_cloud_state.sql, then run it in the Supabase SQL Editor.
+5. Confirm an anonymous user cannot call either RPC and an authenticated non-owner cannot read or write.
+6. Verify the authenticated owner can read an empty result; no state is initialized automatically.
+7. Never copy the service-role key into browser HTML.
 
 ## Transaction design
 - arena_read_cloud_state() returns current revision and state to the owner.

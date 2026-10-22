@@ -172,7 +172,7 @@ el('backup').addEventListener('click',async()=>{
 el('logout').addEventListener('click',()=>{
  if(busy)return;
  try{session?.lock()}catch(_){}
- client?.logout();client=null;session=null;needsRefresh=false;el('revision').textContent='Cloud not connected';el('stations').replaceChildren();el('financialSummary').textContent='Sign in to view verified cloud totals.';el('recoveryReport').textContent='No recovery file inspected.';el('recoveryFile').value='';el('inspectRecovery').disabled=true;
+ client?.logout();client=null;session=null;needsRefresh=false;el('revision').textContent='Cloud not connected';el('stations').replaceChildren();el('financialSummary').textContent='Sign in to view verified cloud totals.';el('sessionHistory').textContent='Sign in to view completed sessions.';el('recoveryReport').textContent='No recovery file inspected.';el('recoveryFile').value='';el('inspectRecovery').disabled=true;
  message('Signed out. Cloud editing disabled.','ok');buttons();
 });
 function argsFor(action,stationId){
@@ -201,6 +201,8 @@ document.addEventListener('click',async event=>{
   const snapshot=await session.execute(command,args);
   message('Committed '+command+' at cloud revision '+snapshot.revision+'. Do not repeat this action.','ok');
  }catch(e){
+  try{session?.lock()}catch(_){}
+  hideUnverifiedCloudView();
   message('BLOCKED / OUTCOME MAY BE UNCERTAIN: '+e.message+'. Refresh and inspect cloud records before considering another action.');
  }finally{busy=false;if(needsRefresh&&session){try{session.lock()}catch(_){}}buttons()}
 });

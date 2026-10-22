@@ -1326,3 +1326,19 @@ test('cloud SQL restricts state reads/writes to owners and rejects stale revisio
  assert.match(sql,/updated_by=auth\.uid\(\)/);
  assert.match(sql,/Cloud state must not include PIN or bridge credentials/);
 });
+
+test('cloud migration page never overwrites initialized cloud state or auto-imports backups', () => {
+ const migration=readFileSync(resolve(here,'../cloud-migration.html'),'utf8');
+ assert.match(migration,/prepareCloudState\(parsed\)/);
+ assert.match(migration,/latest\.initialized\|\|latest\.revision!==0/);
+ assert.match(migration,/client\.write\(0,prepared\)/);
+ assert.match(migration,/if\(!confirm\(/);
+ assert.match(migration,/Cloud sync is NOT enabled/);
+ assert.doesNotMatch(migration,/localStorage\.setItem/);
+});
+test('cloud SQL checks every station rate and blocks device-specific settings', () => {
+ const sql=readFileSync(resolve(here,'../supabase/001_cloud_state.sql'),'utf8');
+ assert.match(sql,/generate_series\(0,15\)/);
+ assert.match(sql,/Station identity or price mismatch/);
+ assert.match(sql,/bridgeToken','bridgeUrl','printerIp/);
+});

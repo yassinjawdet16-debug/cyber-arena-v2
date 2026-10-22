@@ -64,3 +64,10 @@ check('daily archive catches missed 6 AM minute', () => {
  assert.doesNotMatch(html, /Number\(p\.hour\)===6&&Number\(p\.minute\)===0/);
  assert.match(html, /timeZone:'Asia\/Baghdad'/);
 });
+
+check('financial inputs reject unsafe values', () => {
+ assert.match(html, /Number\.isSafeInteger\(qty\)/);
+ assert.match(html, /Number\.isSafeInteger\(price\)/);
+ assert.match(html, /Number\.isSafeInteger\(qty\*price\)/);
+ assert.match(html, /Number\.isSafeInteger\(amount\)\|\|amount===0/);
+});

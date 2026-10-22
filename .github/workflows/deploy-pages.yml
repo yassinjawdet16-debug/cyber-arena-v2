@@ -30,6 +30,7 @@ jobs:
           test -s i18n/languages.js
           node --check cloud/cloud-sync.js
           node --check i18n/languages.js
+          node -e "const fs=require('fs'); const html=fs.readFileSync('index.html','utf8'); const js=html.match(/<script>([\\s\\S]*?)<\\/script>/); if(!js)throw Error('Missing inline JS'); new Function(js[1]); for(const x of ['editBillDiscount','billArchiveDate','toggleArenaMenu','unprintedBills','printedBills'])if(!html.includes(x))throw Error('Missing '+x); console.log('Inline JavaScript and billing controls validated')"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

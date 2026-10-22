@@ -133,3 +133,9 @@ check('translated cloud and sales controls are present in each language', () => 
  assert.match(lang,/Object\.assign\(dictionary\.sorani,/);
  for(const label of ['Sync safely','Recover cloud snapshot','PlayStation Stations','Sales history'])assert.ok(lang.includes(label),label+' translation key missing');
 });
+
+check('daily report reconciles session income, sales, and manual adjustments', () => {
+ assert.match(html,/const adjustments=data\.adjustments\.filter\(a=>a\.kind==='adjustment'/);
+ assert.match(html,/Cash adjustments: \$\{money\(adjustmentTotal\)\}/);
+ assert.match(html,/Cash total: \$\{money\(sessionTotal\+salesTotal\+adjustmentTotal\)\}/);
+});

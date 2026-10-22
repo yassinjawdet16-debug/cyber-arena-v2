@@ -55,13 +55,13 @@ begin
  -- Validate every station ID, type and rate on the server, not only in browser JS.
  if exists (
   select 1 from generate_series(0,15) as n(i)
-  where v_stations->n.i->>'id' <> (
+  where (v_stations->n.i->>'id') is distinct from (
    case when n.i=0 then 'VIP-01'
         when n.i<8 then 'PS5-'||lpad((n.i+1)::text,2,'0')
         else 'PS4-'||lpad((n.i+1)::text,2,'0') end
   )
-  or v_stations->n.i->>'type' <> (case when n.i=0 then 'VIP' when n.i<8 then 'PS5' else 'PS4' end)
-  or v_stations->n.i->>'rate' <> (case when n.i=0 then '10000' when n.i<8 then '5000' else '3000' end)
+  or (v_stations->n.i->>'type') is distinct from (case when n.i=0 then 'VIP' when n.i<8 then 'PS5' else 'PS4' end)
+  or (v_stations->n.i->>'rate') is distinct from (case when n.i=0 then '10000' when n.i<8 then '5000' else '3000' end)
  ) then raise exception 'Station identity or price mismatch'; end if;
  if jsonb_typeof(p_state->'active')<>'object'
  or jsonb_typeof(p_state->'sessions')<>'array'
@@ -82,8 +82,13 @@ begin
  where s.singleton_id=1 for update;
  if not found then
    if p_expected_revision<>0 then raise exception 'Cloud state not initialized (conflict)' using errcode='40001'; end if;
+   -- Competing first-time initializers must not replace each other's state.
    insert into public.arena_cloud_state(singleton_id,revision,state,updated_by)
-   values (1,1,p_state,auth.uid());
+   values (1,1,p_state,auth.uid())
+   on conflict (singleton_id) do nothing;
+   if not found then
+     raise exception 'Cloud revision conflict: initialization already completed' using errcode='40001';
+   end if;
    return 1;
  end if;
  if v_revision<>p_expected_revision then

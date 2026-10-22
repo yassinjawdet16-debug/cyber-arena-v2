@@ -36,3 +36,4 @@ jobs:
           node tests/cloud.test.cjs
           node tests/finance.test.cjs
           node tests/backup.test.cjs
+          node tests/business-day.test.cjs

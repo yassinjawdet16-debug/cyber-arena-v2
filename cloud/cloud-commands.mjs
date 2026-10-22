@@ -4,7 +4,7 @@ export const cloudCommands={
  start({stationId,id,at,minutes=null}){return s=>{
   const st=s.stations.find(x=>x.id===stationId);
   if(!st||s.active[stationId])throw Error('Station unavailable');
-  if(!id||!Number.isSafeInteger(at)||at<0||minutes!==null&&(!Number.isSafeInteger(minutes)||minutes<=0||!Number.isSafeInteger(at+minutes*60000)))throw Error('Invalid session');
+  if(typeof id!=='string'||!id.trim()||!Number.isSafeInteger(at)||at<0||minutes!==null&&(!Number.isSafeInteger(minutes)||minutes<=0||!Number.isSafeInteger(at+minutes*60000)))throw Error('Invalid session');
   if([...s.sessions,...Object.values(s.active),...Object.values(s.archives).flat(),...s.bills,...s.sales,...s.adjustments].some(x=>x.id===id))throw Error('Duplicate session');
   s.active[stationId]={id,stationId,startedAt:at,rate:st.rate,durationMinutes:minutes,endsAt:minutes===null?null:at+minutes*60000,discount:0};
  }},
@@ -21,7 +21,7 @@ export const cloudCommands={
   return state=>{
    const a=state.active[stationId],station=state.stations.find(x=>x.id===stationId);
    if(!a||!station||a.rate!==station.rate)throw Error('Invalid active session');
-   if(!Number.isSafeInteger(endedAt)||endedAt<a.startedAt||!billId||!movementId||billId===movementId||!/^(?:\\d{4})-(?:\\d{2})-(?:\\d{2})$/.test(businessDay)||businessDay!==iraqBusinessDay(endedAt))throw Error('Invalid completion');
+   if(!Number.isSafeInteger(endedAt)||endedAt<a.startedAt||typeof billId!=='string'||!billId.trim()||typeof movementId!=='string'||!movementId.trim()||billId===movementId||!/^(?:\\d{4})-(?:\\d{2})-(?:\\d{2})$/.test(businessDay)||businessDay!==iraqBusinessDay(endedAt))throw Error('Invalid completion');
    const all=[...state.sessions,...Object.values(state.archives).flat()];
    if(all.some(x=>x.id===a.id)||state.bills.some(x=>x.sessionId===a.id)||state.adjustments.some(x=>x.kind==='session'&&x.sessionId===a.id))throw Error('Session already completed or billed');
    const ids=new Set([...all,...Object.values(state.active),...state.bills,...state.adjustments,...state.sales].map(x=>x.id));

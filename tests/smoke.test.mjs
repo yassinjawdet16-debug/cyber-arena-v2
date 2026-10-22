@@ -1375,3 +1375,15 @@ test('localStorage stale-tab writes fail closed rather than overwrite newer cafÃ
  assert.match(source,/currentStorageValue!==lastKnownStorageValue/);
  assert.match(source,/lastKnownStorageValue=nextValue/);
 });
+
+test('language switch preserves nested controls and translates live station cards',()=>{
+ const start=source.indexOf('function toggleLanguage(');
+ const end=source.indexOf('function toggleMainMenu(',start);
+ const fn=source.slice(start,end);
+ assert.match(fn,/if\(el\.children\.length\)return/);
+ assert.match(fn,/window\.languageText=/);
+ assert.match(source,/function renderStations\(\)\{const t=window\.languageText/);
+ assert.match(source,/t\('Finish'\)/);
+ assert.match(source,/t\('Start'\)/);
+ assert.match(fn,/renderStations\(\)/);
+});

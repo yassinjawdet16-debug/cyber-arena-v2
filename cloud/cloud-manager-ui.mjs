@@ -16,7 +16,7 @@ function buttons(){
  el('refresh').disabled=!session||busy;
  el('backup').disabled=!ready();
  el('logout').disabled=!client||busy;
- el('login').disabled=busy;
+ el('login').disabled=busy||Boolean(client);
 }
 function showFinancialSummary(snapshot){
  const {day,sessionIncome,salesIncome,otherAdjustments,net,unlinkedSessionMovements,cashDifference,requiresReconciliation}=cloudDailyCashSummary(snapshot.state,Date.now());
@@ -53,7 +53,7 @@ async function refresh(){
  finally{busy=false;buttons()}
 }
 el('login').addEventListener('click',async()=>{
- if(busy)return;busy=true;buttons();
+ if(busy||client)return;busy=true;buttons();
  try{
   client=createArenaCloudClient({url:el('url').value.trim(),publishableKey:el('key').value.trim()});
   await client.login(el('email').value.trim(),el('password').value);

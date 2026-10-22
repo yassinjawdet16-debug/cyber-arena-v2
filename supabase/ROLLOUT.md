@@ -13,7 +13,7 @@ Current status: cloud adapter and SQL schema are staged, **not connected to the 
 
 ## Limitations and security
 - The adapter is not yet wired into `index.html`, and it does not automatically synchronize devices.
-- Snapshot save checks revisions, but this is not yet an atomic compare-and-swap; concurrent writes can still race. A transactional RPC is needed before enabling automatic multi-device writes.
+- Snapshot saves now use an atomic database RPC with revision checks, but this still requires database deployment, integration testing, and a conflict-resolution UX before automatic multi-device synchronization.
 - Cloud snapshots exclude settings.pin, settings.bridgeToken and settings.bridgeUrl. Local owner PIN protection is not a substitute for Supabase Auth.
 - The schema stores JSON snapshots, not normalized financial transactions. Audit-grade financial ledgers and server-side authorization require further work.
 - Recovery must be explicit, backed up, and verified. No unattended restoration.

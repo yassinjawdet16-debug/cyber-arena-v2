@@ -8,7 +8,7 @@ test('cloud manager exports recovery only after fresh authoritative read',()=>{
  assert.match(html,/id="backup" disabled/);
  assert.match(ui,/el\('backup'\)\.disabled=!ready\(\)/);
  assert.match(ui,/const snapshot=await session\.refresh\(\)/);
- assert.match(ui,/createCloudRecoveryPackage\(snapshot\)/);
+ assert.match(ui,/createCloudRecoveryPackage\(\{initialized:true,revision:snapshot\.revision,state:snapshot\.state\}\)/);
  assert.match(ui,/anchor\.download='cyber-arena-cloud-backup-'/);
  assert.doesNotMatch(ui,/localStorage|sessionStorage/);
 });

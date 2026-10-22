@@ -64,8 +64,8 @@ async function refresh(){
  if(!session)throw Error('Owner sign-in required');
  const startedEpoch=connectionEpoch;
  busy=true;buttons();
- try{const snapshot=await session.refresh();if(startedEpoch!==connectionEpoch)throw Error('Connection changed during refresh; refresh again');needsRefresh=false;message('Cloud refreshed. Revision '+snapshot.revision,'ok')}
- catch(e){el('stations').replaceChildren();el('revision').textContent='Cloud refresh failed — editing locked';el('financialSummary').textContent='Cloud totals unavailable until a successful refresh.';message('Cloud refresh blocked: '+e.message+'. No financial edits allowed.')}
+ try{const snapshot=await session.refresh();if(startedEpoch!==connectionEpoch){try{session.lock()}catch(_){}throw Error('Connection changed during refresh; refresh again')}needsRefresh=false;message('Cloud refreshed. Revision '+snapshot.revision,'ok')}
+ catch(e){try{session.lock()}catch(_){}el('stations').replaceChildren();el('revision').textContent='Cloud refresh failed — editing locked';el('financialSummary').textContent='Cloud totals unavailable until a successful refresh.';message('Cloud refresh blocked: '+e.message+'. No financial edits allowed.')}
  finally{busy=false;buttons()}
 }
 el('login').addEventListener('click',async()=>{

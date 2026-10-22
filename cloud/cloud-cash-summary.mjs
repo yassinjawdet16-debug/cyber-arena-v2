@@ -19,8 +19,10 @@ export function cloudDailyCashSummary(state,at){
  // Legacy imported records may lack linked cash movements; do not infer cash paid.
  const unlinkedSessionMovements=cash.filter(x=>x.kind==='session'&&!x.sessionId);
  const net=amount(sessionIncome+salesIncome+otherAdjustments,'net');
+ const recordedCashMovements=amount(movementSession+movementSales+otherAdjustments,'recorded cash');
+ const cashDifference=amount(net-recordedCashMovements,'cash difference');
  return Object.freeze({day,sessionIncome,salesIncome,otherAdjustments,net,
-  recordedCashMovements:amount(movementSession+movementSales+otherAdjustments,'recorded cash'),
+  recordedCashMovements,cashDifference,requiresReconciliation:cashDifference!==0||unlinkedSessionMovements.length>0,
   unlinkedSessionMovements:unlinkedSessionMovements.length,
   sessionBills:bills.length,salesCount:sales.length});
 }

@@ -102,3 +102,11 @@ check('cash and reports share 6 AM Baghdad business day', () => {
  assert.match(html, /businessDayForTimestamp\(s\.endedAt\)===today/);
  assert.match(html, /recordBusinessDay\(a,'at'\)===today/);
 });
+
+check('cloud sync requires a known baseline and refuses divergent snapshots', () => {
+ assert.match(html, /async function cloudSync\(\)/);
+ assert.match(html, /if\(localChanged&&cloudChanged\)/);
+ assert.match(html, /if\(!base\)/);
+ assert.match(html, /cloudSession\.baseline=\{revision:remote\.revision,fingerprint:cloudSnapshotFingerprint\(remote\.payload\)\}/);
+ assert.match(html, /adapter\.save\(data,remote\.revision\)/);
+});

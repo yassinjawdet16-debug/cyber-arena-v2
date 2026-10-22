@@ -40,6 +40,7 @@ export function validateCloudState(state){
   if(!expectedStations.some(st=>st.id===session.stationId))fail('Invalid completed session station: '+session.id);
   if(!Number.isSafeInteger(session.endedAt)||!Number.isSafeInteger(session.startedAt)||session.endedAt<session.startedAt||session.startedAt<0)fail('Invalid completed session timestamps: '+session.id);
   if(!Number.isSafeInteger(session.charge)||session.charge<0||session.charge%250!==0)fail('Invalid completed session charge: '+session.id);
+  if(session.rawCharge!==undefined&&(!Number.isSafeInteger(session.rawCharge)||session.rawCharge<0))fail('Invalid completed session raw charge: '+session.id);
  }
  for(const [stationId,session] of Object.entries(state.active)){
   if(!expectedStations.some(x=>x.id===stationId)||!object(session)||session.stationId!==stationId)fail('Invalid active station');

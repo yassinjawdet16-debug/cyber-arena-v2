@@ -2,6 +2,7 @@ import {createArenaCloudClient} from './arena-cloud-client.mjs';
 import {createCloudUiSession} from './cloud-ui-session.mjs';
 import {iraqBusinessDay} from './business-day.mjs';
 import {cloudDailyCashSummary} from './cloud-cash-summary.mjs';
+import {createCloudRecoveryPackage} from './cloud-recovery.mjs';
 const el=id=>document.getElementById(id);
 const stations=Array.from({length:16},(_,i)=>i===0?'VIP-01':(i<8?'PS5-':'PS4-')+String(i+1).padStart(2,'0'));
 let client=null,session=null,busy=false,needsRefresh=false;
@@ -13,6 +14,7 @@ function buttons(){
  const allowed=ready();
  for(const b of document.querySelectorAll('[data-action]'))b.disabled=!allowed;
  el('refresh').disabled=!session||busy;
+ el('backup').disabled=!ready();
  el('logout').disabled=!client||busy;
  el('login').disabled=busy;
 }
@@ -63,6 +65,25 @@ el('login').addEventListener('click',async()=>{
  finally{busy=false;buttons()}
 });
 el('refresh').addEventListener('click',refresh);
+el('backup').addEventListener('click',async()=>{
+ if(!ready())return;
+ busy=true;buttons();
+ try{
+  // Always re-read the authoritative cloud revision immediately before export.
+  const snapshot=await session.refresh();
+  const pkg=createCloudRecoveryPackage(snapshot);
+  const payload=JSON.stringify(pkg,null,2);
+  const blob=new Blob([payload],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const anchor=document.createElement('a');
+  anchor.href=url;
+  anchor.download='cyber-arena-cloud-backup-'+pkg.exportedAt.slice(0,10)+'-r'+pkg.sourceRevision+'.json';
+  document.body.append(anchor);
+  try{anchor.click()}finally{anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
+  message('Backup prepared for download at cloud revision '+pkg.sourceRevision+'. Verify it is saved before relying on it.','ok');
+ }catch(e){message('Backup export failed: '+e.message+'. No cloud records changed.')}
+ finally{busy=false;if(needsRefresh&&session){try{session.lock()}catch(_){}}buttons()}
+});
 el('logout').addEventListener('click',()=>{
  if(busy)return;
  try{session?.lock()}catch(_){}

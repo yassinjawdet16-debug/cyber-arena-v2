@@ -1368,3 +1368,10 @@ test('Kurmanji joins English and Arabic as a persistent third language', () => {
  assert.match(code,/next==='ku'/);
  assert.match(source,/\['ar','ku'\]\.includes\(data\.settings\.language\)/);
 });
+
+test('localStorage stale-tab writes fail closed rather than overwrite newer café records', () => {
+ assert.match(source,/window\.addEventListener\('storage',event=>/);
+ assert.match(source,/if\(storageConflict\)\{setStatus\('🔴 Save blocked/);
+ assert.match(source,/currentStorageValue!==lastKnownStorageValue/);
+ assert.match(source,/lastKnownStorageValue=nextValue/);
+});

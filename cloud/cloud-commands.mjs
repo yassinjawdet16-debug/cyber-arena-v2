@@ -54,13 +54,13 @@ export const cloudCommands={
   s.lastArchiveDay=businessDay;
  }},
  sale({id,movementId,name,qty,price,at,businessDay}){return s=>{
-  if(!id||!movementId||id===movementId||!name?.trim()||!Number.isSafeInteger(qty)||qty<=0||!Number.isSafeInteger(price)||price<0||!Number.isSafeInteger(qty*price)||!Number.isSafeInteger(at)||at<0||!/^\d{4}-\d{2}-\d{2}$/.test(businessDay)||businessDay!==iraqBusinessDay(at))throw Error('Invalid sale');
+  if(typeof id!=='string'||!id.trim()||typeof movementId!=='string'||!movementId.trim()||id===movementId||typeof name!=='string'||!name.trim()||!Number.isSafeInteger(qty)||qty<=0||!Number.isSafeInteger(price)||price<0||!Number.isSafeInteger(qty*price)||!Number.isSafeInteger(at)||at<0||!/^\d{4}-\d{2}-\d{2}$/.test(businessDay)||businessDay!==iraqBusinessDay(at))throw Error('Invalid sale');
   if([...s.sales,...s.adjustments,...s.bills,...s.sessions,...Object.values(s.active),...Object.values(s.archives).flat()].some(x=>x.id===id||x.id===movementId))throw Error('Duplicate sale');
   s.sales.unshift({id,name,qty,unitPrice:price,total:qty*price,createdAt:at,date:businessDay,businessDay});
   s.adjustments.push({id:movementId,date:businessDay,businessDay,at,kind:'sale',amount:qty*price,description:qty+' × '+name});
  }},
  cash({id,amount,description,at,businessDay}){return s=>{
-  if(!id||!Number.isSafeInteger(amount)||amount%250!==0||!Number.isSafeInteger(at)||at<0||!/^\d{4}-\d{2}-\d{2}$/.test(businessDay)||businessDay!==iraqBusinessDay(at)||[...s.adjustments,...s.bills,...s.sales,...s.sessions,...Object.values(s.active),...Object.values(s.archives).flat()].some(x=>x.id===id))throw Error('Invalid adjustment');
+  if(typeof id!=='string'||!id.trim()||!Number.isSafeInteger(amount)||amount%250!==0||!Number.isSafeInteger(at)||at<0||!/^\d{4}-\d{2}-\d{2}$/.test(businessDay)||businessDay!==iraqBusinessDay(at)||[...s.adjustments,...s.bills,...s.sales,...s.sessions,...Object.values(s.active),...Object.values(s.archives).flat()].some(x=>x.id===id))throw Error('Invalid adjustment');
   s.adjustments.push({id,date:businessDay,businessDay,at,kind:'adjustment',amount,description:description||'Adjustment'});
  }}
 };

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cyber Arena V2 — Cloud Migration</title>
+<style>body{font:16px system-ui;background:#0b1020;color:#edf4ff;margin:0;padding:20px}main{max-width:650px;margin:auto}section{background:#17223a;padding:18px;border-radius:12px;margin:14px 0}input,button{box-sizing:border-box;width:100%;padding:12px;margin:7px 0;font:inherit;border-radius:8px}input{background:#10182b;color:#fff;border:1px solid #64748b}button{background:#31e6a1;border:0;color:#051a11;font-weight:700}button:disabled{opacity:.5}pre{white-space:pre-wrap;overflow-wrap:anywhere}small{color:#aebdd1}</style></head><body><main><h1>☁️ Cyber Arena — Safe Cloud Migration</h1>
+<p>This is a separate setup tool, NOT the live café manager. It never changes local browser data. Uploading a backup to cloud requires an explicit confirmation.</p>
+<section><h2>1. Owner sign-in</h2><input id="email" type="email" autocomplete="username" placeholder="Supabase owner email"><input id="password" type="password" autocomplete="current-password" placeholder="Password"><button id="login">Sign in and inspect cloud</button><button id="logout">Sign out</button><pre id="cloudStatus" aria-live="polite">Not connected</pre></section>
+<section><h2>2. Inspect backup</h2><input id="backup" type="file" accept=".json,application/json"><button id="inspect">Validate backup locally</button><pre id="backupStatus" aria-live="polite">No backup selected</pre><small>The owner PIN, bridge token, bridge URL and printer IP are excluded from cloud data.</small></section>
+<section><h2>3. First-time cloud initialization</h2><p>Only available when cloud is empty. Never overwrites existing cloud data. Export and verify a separate backup before proceeding.</p><button id="initialize" disabled>Initialize EMPTY cloud from verified backup</button><pre id="result" aria-live="polite"></pre></section>
+</main><script type="module">
+import {createArenaCloudClient} from './cloud/arena-cloud-client.mjs';
+import {prepareCloudState,validateCloudState} from './cloud/cloud-state.mjs';
+const $=id=>document.getElementById(id);
+const client=createArenaCloudClient({url:'https://bienvhtkmpkjekjdbzet.supabase.co',publishableKey:'sb_publishable_LW_fgfpn4XN-1wBVPpCO8Q_TfJNKqjt'});
+let prepared=null,revision=null,busy=false;
+const msg=(id,text)=>$(id).textContent=text;
+const update=()=>{$('initialize').disabled=busy||!prepared||revision!==0||!client.isLoggedIn()};
+$('login').onclick=async()=>{
+ if(busy)return;busy=true;update();msg('cloudStatus','Checking owner access…');
+ try{await client.login($('email').value.trim(),$('password').value);$('password').value='';
+  const snapshot=await client.read();revision=snapshot.revision;
+  msg('cloudStatus',snapshot.initialized?'Cloud already initialized at revision '+revision+'. Initialization is BLOCKED.':'Owner verified. Cloud is empty. First-time initialization is possible.');
+ }catch(e){revision=null;msg('cloudStatus','Error: '+e.message)}finally{busy=false;update()}
+};
+$('logout').onclick=()=>{client.logout();revision=null;prepared=null;$('password').value='';msg('cloudStatus','Signed out');msg('backupStatus','No prepared backup');update()};
+$('inspect').onclick=async()=>{
+ prepared=null;update();const file=$('backup').files[0];
+ if(!file){msg('backupStatus','Select a JSON backup first');return}
+ if(file.size>25*1024*1024){msg('backupStatus','Backup exceeds 25 MB limit');return}
+ try{
+  const parsed=JSON.parse(await file.text());
+  const safe=prepareCloudState(parsed);
+  const report=validateCloudState(safe);
+  prepared=safe;
+  msg('backupStatus','PASS: '+report.completedSessions+' completed sessions, '+report.activeSessions+' active sessions, '+report.legacyCashMovements+' legacy cash movements. No upload performed.\nInspect your backup and verify its origin before initializing.');
+ }catch(e){msg('backupStatus','FAILED: '+e.message+'. No data changed.')}finally{update()}
+};
+$('initialize').onclick=async()=>{
+ if(busy||!prepared||revision!==0||!client.isLoggedIn())return;
+ if(!confirm('DANGER: Initialize empty cloud from this backup? Confirm you exported and verified a separate local backup. This will NOT enable synchronization yet.'))return;
+ busy=true;update();msg('result','Rechecking cloud revision before initialization…');
+ try{
+  const latest=await client.read();
+  if(latest.initialized||latest.revision!==0)throw Error('Cloud is no longer empty. No write attempted.');
+  const next=await client.write(0,prepared);
+  revision=next;prepared=null;
+  msg('result','Cloud initialized at revision '+next+'. Local browser records remain unchanged. Cloud sync is NOT enabled.');
+ }catch(e){revision=null;prepared=null;msg('result','Initialization uncertain or blocked: '+e.message+'\nSign in again and inspect cloud before doing anything else. NEVER blindly retry.')}finally{busy=false;update()}
+};
+update();
+</script></body></html>

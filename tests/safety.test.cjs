@@ -26,9 +26,9 @@ check('250 IQD rounding at boundaries', () => {
   [[0,0],[124,0],[125,250],[249,250],[374,250],[375,500],[10000,10000]].forEach(([input, expected]) => assert.equal(round(input), expected));
 });
 check('manual receipt printing and print bridge controls', () => {
-  assert.match(html, /async function printBill\\s*\\(/);
-  assert.doesNotMatch(html, /192\\.168\\.1\\.44/);
-  assert.match(html, /192\\.168\\.1\\.41/);
+  assert.match(html, /async function printBill\s*\(/);
+  assert.doesNotMatch(html, /192\.168\.1\.44/);
+  assert.match(html, /192\.168\.1\.41/);
   assert.match(html, /function printBill\s*\(/);
   assert.match(html, /id="bridgeUrl"/);
   assert.match(html, /id="bridgeToken"/);

@@ -26,7 +26,15 @@ export function createCloudCoordinator(client){
    if(typeof mutate!=='function')throw new TypeError('Mutator required');
    busy=true;
    try{
-    const next=clone(snapshot.state);
+    // Check the authoritative revision before running the mutation.
+    // A second device may have updated the cloud since our last refresh.
+    const latest=await client.read();
+    if(!latest.initialized||!Number.isSafeInteger(latest.revision))
+     throw new CloudSyncBlockedError('Cloud is not initialized or revision is invalid');
+    validateCloudState(latest.state);
+    if(latest.revision!==snapshot.revision)
+     throw new CloudSyncBlockedError('Cloud changed on another device. Refresh and review before editing');
+    const next=clone(latest.state);
     const result=mutate(next);
     if(result&&typeof result.then==='function')throw new CloudSyncBlockedError('Async mutators prohibited');
     const safe=prepareCloudState(next);

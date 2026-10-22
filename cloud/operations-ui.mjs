@@ -6,7 +6,7 @@ const stations=Array.from({length:16},(_,i)=>i===0?'VIP-01':(i<8?'PS5-':'PS4-')+
 for(const id of stations){const option=document.createElement('option');option.value=id;option.textContent=id;el('station').append(option)}
 let coordinator,runner;
 const show=message=>{el('result').textContent=message};
-const dateKey=time=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(time-21600000));
+const dateKey=time=>{const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date(time));const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));const day=new Date(Date.UTC(Number(p.year),Number(p.month)-1,Number(p.day)-(Number(p.hour)<6?1:0)));return day.toISOString().slice(0,10)};
 const id=()=>crypto.randomUUID();
 async function refresh(){if(!coordinator)throw Error('Sign in first');const s=await coordinator.refresh();el('status').textContent='Cloud revision '+s.revision+', active stations '+Object.keys(s.state.active).length;return s}
 el('login').onclick=async()=>{try{const client=createArenaCloudClient({url:el('url').value.trim(),publishableKey:el('key').value.trim()});await client.login(el('email').value.trim(),el('password').value);el('password').value='';coordinator=createCloudCoordinator(client);runner=createCloudActionRunner(coordinator);await refresh();show('Owner authenticated.')}catch(e){coordinator=null;runner=null;show('Login failed: '+e.message)}};

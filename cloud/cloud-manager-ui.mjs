@@ -2,7 +2,7 @@ import {createArenaCloudClient} from './arena-cloud-client.mjs';
 import {createCloudUiSession} from './cloud-ui-session.mjs';
 import {iraqBusinessDay} from './business-day.mjs';
 import {cloudDailyCashSummary} from './cloud-cash-summary.mjs';
-import {createCloudRecoveryPackage} from './cloud-recovery.mjs';
+import {createCloudRecoveryPackage,inspectCloudRecoveryPackage} from './cloud-recovery.mjs';
 const el=id=>document.getElementById(id);
 const stations=Array.from({length:16},(_,i)=>i===0?'VIP-01':(i<8?'PS5-':'PS4-')+String(i+1).padStart(2,'0'));
 let client=null,session=null,busy=false,needsRefresh=false;
@@ -65,6 +65,23 @@ el('login').addEventListener('click',async()=>{
  finally{busy=false;buttons()}
 });
 el('refresh').addEventListener('click',refresh);
+el('recoveryFile').addEventListener('change',()=>{
+ el('inspectRecovery').disabled=!el('recoveryFile').files?.length||busy;
+ el('recoveryReport').textContent='No recovery file inspected.';
+});
+el('inspectRecovery').addEventListener('click',async()=>{
+ const file=el('recoveryFile').files?.[0];
+ if(!file||busy)return;
+ busy=true;buttons();el('inspectRecovery').disabled=true;
+ try{
+  if(file.size>20*1024*1024)throw Error('Recovery file exceeds 20 MB inspection limit');
+  const pkg=JSON.parse(await file.text());
+  const inspected=inspectCloudRecoveryPackage(pkg);
+  const report=inspected.report;
+  el('recoveryReport').textContent='VALID BACKUP · Source revision '+inspected.sourceRevision+' · Completed sessions '+report.completedSessions+' · Active stations '+report.activeSessions+' · Legacy movements '+report.legacyCashMovements+'. Inspection only: NO cloud records changed.';
+ }catch(e){el('recoveryReport').textContent='INVALID BACKUP: '+e.message+'. No cloud records changed.'}
+ finally{busy=false;buttons();el('inspectRecovery').disabled=!el('recoveryFile').files?.length}
+});
 el('backup').addEventListener('click',async()=>{
  if(!ready())return;
  busy=true;buttons();

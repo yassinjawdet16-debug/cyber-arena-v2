@@ -1,6 +1,7 @@
 import {createArenaCloudClient} from './arena-cloud-client.mjs';
 import {createCloudUiSession} from './cloud-ui-session.mjs';
 import {iraqBusinessDay} from './business-day.mjs';
+import {timedSessionStatus,formatCountdown} from './cloud-countdown.mjs';
 import {cloudDailyCashSummary} from './cloud-cash-summary.mjs';
 import {createCloudRecoveryPackage,inspectCloudRecoveryPackage} from './cloud-recovery.mjs';
 const el=id=>document.getElementById(id);
@@ -23,6 +24,14 @@ function showFinancialSummary(snapshot){
  const report='Business day '+day+' (Baghdad 06:00 cutoff) · Session income '+sessionIncome.toLocaleString('en-US')+' IQD · Sales '+salesIncome.toLocaleString('en-US')+' IQD · Adjustments '+otherAdjustments.toLocaleString('en-US')+' IQD · Net '+net.toLocaleString('en-US')+' IQD'+(requiresReconciliation?' · ⚠ RECONCILE CASH: '+cashDifference.toLocaleString('en-US')+' IQD difference'+(unlinkedSessionMovements?' · '+unlinkedSessionMovements+' unlinked legacy movement(s)':''):'');
  el('financialSummary').textContent=report;
 }
+function updateCountdowns(){
+ const now=Date.now();
+ for(const node of document.querySelectorAll('[data-countdown]')){
+  const endsAt=Number(node.dataset.endsAt),status=timedSessionStatus({endsAt},now);
+  node.textContent=status.expired?'⏰ TIME UP — extend or finish manually':'⏳ '+formatCountdown(status.remainingMs)+' remaining';
+  node.className=status.expired?'warning':'muted';
+ }
+}
 function render(snapshot){
  const root=el('stations');root.replaceChildren();
  el('revision').textContent='Cloud revision '+snapshot.revision+' · '+Object.keys(snapshot.state.active).length+' active station(s)';
@@ -34,7 +43,7 @@ function render(snapshot){
   const details=document.createElement('p');details.className='muted';
   details.textContent=st.rate.toLocaleString('en-US')+' IQD/hr · '+(active?'Active since '+new Date(active.startedAt).toLocaleString():'Available');
   card.append(details);
-  if(active?.endsAt){const p=document.createElement('p');p.textContent='Timed until '+new Date(active.endsAt).toLocaleString();card.append(p)}
+  if(active?.endsAt){const p=document.createElement('p');p.dataset.countdown=stationId;p.dataset.endsAt=String(active.endsAt);card.append(p)}
   const actions=active?['extend','discount','finish']:['start','timed'];
   for(const action of actions){
    const button=document.createElement('button');button.dataset.action=action;button.dataset.station=stationId;
@@ -43,6 +52,7 @@ function render(snapshot){
   }
   root.append(card);
  }
+ updateCountdowns();
  buttons();
 }
 async function refresh(){
@@ -136,6 +146,7 @@ document.addEventListener('click',async event=>{
  }finally{busy=false;if(needsRefresh&&session){try{session.lock()}catch(_){}}buttons()}
 });
 buttons();
+setInterval(updateCountdowns,1000);
 
 // Invalidate even during a pending write. Never cancel or retry an uncertain commit.
 function invalidateCloudView(text){

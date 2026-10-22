@@ -62,3 +62,14 @@ test('concurrent transactions cannot both write',async()=>{
  await assert.rejects(c.transact(s=>{s.settings.receiptName='Two'}),/Operation in progress/);
  finish();await first;assert.equal(m.writes,1);
 });
+
+test('stale cloud revision is rejected before mutation callback runs',async()=>{
+ const m=mock(),c=createCloudCoordinator(m.client);
+ await c.refresh();
+ m.externalEdit();
+ let invoked=false;
+ await assert.rejects(c.transact(()=>{invoked=true}),/Cloud changed/);
+ assert.equal(invoked,false);
+ assert.equal(m.writes,0);
+ assert.equal(c.status().ready,false);
+});

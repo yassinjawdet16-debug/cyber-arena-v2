@@ -4,11 +4,11 @@ import {iraqBusinessDay} from './business-day.mjs';
 import {cloudDailyCashSummary} from './cloud-cash-summary.mjs';
 const el=id=>document.getElementById(id);
 const stations=Array.from({length:16},(_,i)=>i===0?'VIP-01':(i<8?'PS5-':'PS4-')+String(i+1).padStart(2,'0'));
-let client=null,session=null,busy=false;
+let client=null,session=null,busy=false,needsRefresh=false;
 const newId=()=>crypto.randomUUID();
 const safeNumber=id=>Number(el(id).value);
 const message=(text,level='error')=>{el('status').textContent=text;el('status').dataset.level=level};
-const ready=()=>Boolean(session?.status().ready)&&!busy&&navigator.onLine!==false;
+const ready=()=>Boolean(session?.status().ready)&&!busy&&!needsRefresh&&navigator.onLine!==false;
 function buttons(){
  const allowed=ready();
  for(const b of document.querySelectorAll('[data-action]'))b.disabled=!allowed;
@@ -46,7 +46,7 @@ function render(snapshot){
 async function refresh(){
  if(!session)throw Error('Owner sign-in required');
  busy=true;buttons();
- try{const snapshot=await session.refresh();message('Cloud refreshed. Revision '+snapshot.revision,'ok')}
+ try{const snapshot=await session.refresh();needsRefresh=false;message('Cloud refreshed. Revision '+snapshot.revision,'ok')}
  catch(e){message('Cloud refresh blocked: '+e.message+'. No financial edits allowed.')}
  finally{busy=false;buttons()}
 }
@@ -57,7 +57,7 @@ el('login').addEventListener('click',async()=>{
   await client.login(el('email').value.trim(),el('password').value);
   el('password').value='';
   session=createCloudUiSession(client,{render,onBlocked:e=>message('Cloud locked: '+e)});
-  const snapshot=await session.refresh();
+  const snapshot=await session.refresh();needsRefresh=false;
   message('Owner authenticated. Cloud revision '+snapshot.revision,'ok');
  }catch(e){client?.logout();client=null;session=null;el('password').value='';message('Login or initial refresh failed: '+e.message)}
  finally{busy=false;buttons()}
@@ -66,7 +66,7 @@ el('refresh').addEventListener('click',refresh);
 el('logout').addEventListener('click',()=>{
  if(busy)return;
  try{session?.lock()}catch(_){}
- client?.logout();client=null;session=null;el('revision').textContent='Cloud not connected';el('stations').replaceChildren();
+ client?.logout();client=null;session=null;needsRefresh=false;el('revision').textContent='Cloud not connected';el('stations').replaceChildren();
  message('Signed out. Cloud editing disabled.','ok');buttons();
 });
 function argsFor(action,stationId){
@@ -86,7 +86,8 @@ document.addEventListener('click',async event=>{
  const target=event.target.closest('[data-action]');
  if(!target||!ready())return;
  const action=target.dataset.action,stationId=target.dataset.station;
- const [command,args]=argsFor(action,stationId);
+ let command,args;
+ try{[command,args]=argsFor(action,stationId)}catch(e){message('Invalid input: '+e.message);return}
  if(!confirm('This changes Supabase financial or session records. Confirm this is a backed-up TEST project and approve '+action+(stationId?' on '+stationId:'')+'?'))return;
  busy=true;buttons();
  try{
@@ -94,26 +95,19 @@ document.addEventListener('click',async event=>{
   message('Committed '+command+' at cloud revision '+snapshot.revision+'. Do not repeat this action.','ok');
  }catch(e){
   message('BLOCKED / OUTCOME MAY BE UNCERTAIN: '+e.message+'. Refresh and inspect cloud records before considering another action.');
- }finally{busy=false;buttons()}
+ }finally{busy=false;if(needsRefresh&&session){try{session.lock()}catch(_){}}buttons()}
 });
 buttons();
 
-// A disconnected browser must not offer financial writes from a stale snapshot.
-// Coming back online requires an explicit fresh read before editing.
-window.addEventListener('offline',()=>{
+// Invalidate even during a pending write. Never cancel or retry an uncertain commit.
+function invalidateCloudView(text){
+ needsRefresh=true;
  if(session&&!busy){try{session.lock()}catch(_){}}
- message('OFFLINE: Cloud editing disabled. Reconnect and refresh before making financial changes.');
+ message(text);
  buttons();
-});
-window.addEventListener('online',()=>{
- if(session&&!busy){try{session.lock()}catch(_){}}
- message('Connection restored. Refresh cloud and review the latest records before editing.');
- buttons();
-});
+}
+window.addEventListener('offline',()=>invalidateCloudView('OFFLINE: Cloud editing disabled. Reconnect and refresh before making financial changes.'));
+window.addEventListener('online',()=>invalidateCloudView('Connection restored. Refresh cloud and review the latest records before editing.'));
 document.addEventListener('visibilitychange',()=>{
- if(!document.hidden&&session&&!busy){
-  try{session.lock()}catch(_){}
-  message('App resumed. Refresh cloud before editing to check for changes from another device.');
-  buttons();
- }
+ if(!document.hidden&&session)invalidateCloudView('App resumed. Refresh cloud before editing to check for changes from another device.');
 });

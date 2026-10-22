@@ -1293,3 +1293,11 @@ test('active sessions support fixed and percentage discounts calculated at finis
  assert.match(finish,/rawPreview\.raw\*\(Number\(a\.discountValue\)\|\|0\)\/100/);
  assert.match(finish,/discountType:a\.discountType\|\|'fixed'/);
 });
+
+test('legacy cash reconciliation uses completion-time proximity to avoid linking unrelated same-day sessions', () => {
+ const edit=source.slice(source.indexOf('function editCompletedDiscount('),source.indexOf('function renderHistory('));
+ const audit=source.slice(source.indexOf('function auditFinancialRecords('),source.indexOf('function renderReports('));
+ for(const part of [edit,audit]){
+  assert.match(part,/Math\.abs\(Number\(m\.at\)-Number\(s\.endedAt\)\)<=120000/);
+ }
+});

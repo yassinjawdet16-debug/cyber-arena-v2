@@ -50,6 +50,9 @@ export function validateCloudState(state){
   if(session.endsAt!==null&&session.endsAt!==undefined&&(!Number.isSafeInteger(session.endsAt)||session.endsAt<=session.startedAt))fail('Invalid active session end time: '+stationId);
  }
  for(const kind of ['sales','bills','adjustments'])for(const record of state[kind])addId(record,kind);
+ // Validate every ledger row, including archived-day rows, before a dashboard can trust totals.
+ for(const sale of state.sales)if(!Number.isSafeInteger(sale.total)||sale.total<0)fail('Invalid sale total: '+sale.id);
+ for(const movement of state.adjustments)if(!Number.isSafeInteger(movement.amount))fail('Invalid cash movement amount: '+movement.id);
  const completed=new Map(allSessions.map(x=>[x.id,x]));
  // A completed session must not remain active on another device.
  for(const session of Object.values(state.active)){

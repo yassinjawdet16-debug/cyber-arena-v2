@@ -125,3 +125,9 @@ check('Arabic Badini Sorani language selector and right-to-left support', () => 
  assert.match(lang,/current==='ar'\|\|current==='sorani'\|\|current==='badini'\?'rtl'/);
  assert.match(html,/id="arenaLanguage"/);
 });
+
+check('translated cloud and sales controls are present in each language', () => {
+ const lang=fs.readFileSync(path.join(__dirname,'..','i18n','languages.js'),'utf8');
+ assert.match(lang,/const supplemental=/);
+ for(const label of ['Sync safely','Recover cloud snapshot','PlayStation Stations','Sales history'])assert.ok(lang.includes(label),label+' translation key missing');
+});

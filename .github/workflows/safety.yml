@@ -37,6 +37,7 @@ jobs:
           node tests/cloud-fingerprint.test.cjs
           node tests/finance.test.cjs
           node tests/daily-report.test.cjs
+          node tests/printer.test.cjs
           node tests/backup.test.cjs
           node tests/business-day.test.cjs
           node tests/language.test.cjs

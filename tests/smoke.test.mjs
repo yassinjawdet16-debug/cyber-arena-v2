@@ -1268,3 +1268,16 @@ test('completed discount edits update only the linked cash movement or safely re
  assert.match(edit,/linkedMovements\.length!==1/);
  assert.match(edit,/linkedMovements\[0\]\.amount=final/);
 });
+
+test('financial integrity audit remains read-only and verifies linked receipts and cash movements', () => {
+ const start=source.indexOf('function auditFinancialRecords(');
+ const end=source.indexOf('function renderReports(',start);
+ assert.ok(start>=0&&end>start,'audit function exists');
+ const audit=source.slice(start,end);
+ assert.match(audit,/billsBySession/);
+ assert.match(audit,/movementsBySession/);
+ assert.match(audit,/Legacy cash amount differs/);
+ assert.match(audit,/Orphan session bill/);
+ assert.match(audit,/Orphan session cash movement/);
+ assert.doesNotMatch(audit,/\bsave\s*\(/);
+});

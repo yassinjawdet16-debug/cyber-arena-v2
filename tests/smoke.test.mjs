@@ -1357,3 +1357,14 @@ test('cloud SQL verifies exact station identity and excludes device-specific pri
  assert.match(sql,/printerIp/);
  assert.match(sql,/Cloud revision conflict/);
 });
+
+test('Kurmanji joins English and Arabic as a persistent third language', () => {
+ const start=source.indexOf('function toggleLanguage(');
+ const end=source.indexOf('function toggleMainMenu(',start);
+ const code=source.slice(start,end);
+ assert.match(code,/\['en','ar','ku'\]/);
+ assert.match(code,/kurmanjiTranslations/);
+ assert.match(code,/Kurmancî/);
+ assert.match(code,/next==='ku'/);
+ assert.match(source,/\['ar','ku'\]\.includes\(data\.settings\.language\)/);
+});

@@ -83,6 +83,15 @@
   <div class="notice" style="margin-top:14px">Storage note: data is stored in this browser on this device. Clearing browser data or changing devices may remove access. Download JSON backups regularly. This standalone file does not synchronize between devices or create a server-side backup.</div>
  </section>
  <div class="card no-print" style="margin:12px 0"><label for="arenaLanguage">🌐 Interface language / اللغة / زمان</label><select id="arenaLanguage" onchange="setArenaLanguage(this.value)"><option value="en">English</option><option value="ar">العربية</option><option value="badini">Kurdî (Badînî)</option><option value="sorani">کوردی (سۆرانی)</option></select><p class="muted" style="margin:6px 0 0">Translations are being rolled out. Some labels remain in English.</p></div>
+ <div class="card no-print" style="margin:12px 0" id="cloudPanel">
+<h3>☁️ Cloud backup (optional)</h3><p class="muted">Requires your own configured Supabase project and an authenticated owner session. Local data remains primary. Never enter a service-role key.</p>
+<label>Supabase project URL (HTTPS)</label><input id="cloudUrl" placeholder="https://your-project.supabase.co" autocomplete="off">
+<label>Supabase publishable / anon key</label><input id="cloudKey" type="password" autocomplete="off">
+<label>Owner email</label><input id="cloudEmail" type="email" autocomplete="username">
+<label>Owner password (used for login only, not saved)</label><input id="cloudPassword" type="password" autocomplete="current-password">
+<div class="row" style="margin-top:10px"><button onclick="cloudLogin()">Sign in</button><button onclick="cloudCompare()">Check cloud backup</button><button onclick="cloudUpload()">Upload local backup</button><button class="danger" onclick="cloudRestore()">Restore cloud backup</button><button onclick="cloudLogout()">Sign out</button></div>
+<p id="cloudStatus" class="muted" role="status" aria-live="polite">Not connected. Automatic synchronization is disabled.</p>
+</div>
  <div id="globalStatus" class="statusline no-print">🟢 Ready. Data is saved locally on this device.</div>
  <div class="footer">CYBER ARENA V2 • Keep regular backups • Not a substitute for a server-backed multi-device database</div>
 </main>
@@ -162,6 +171,8 @@ function tick(){const expired=Object.values(data.active).filter(a=>a.endsAt&&a.e
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){archiveEligible(false);tick()}});
 archiveEligible(false);renderAll();setInterval(tick,1000);
 </script>
+<script src="./cloud/cloud-sync.js"></script>
+<script src="./cloud/cloud-ui.js"></script>
 <script src="./i18n/languages.js"></script>
 </body>
 </html>

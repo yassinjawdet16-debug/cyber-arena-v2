@@ -24,7 +24,7 @@ function translate(){
   if(!trimmed)continue;
   if(!original.has(node))original.set(node,trimmed);
   const base=original.get(node);
-  if(map[base])node.nodeValue=raw.replace(trimmed,map[base]);
+  if(map[base]){const updated=raw.replace(trimmed,map[base]);if(updated!==raw)node.nodeValue=updated;}
   else if(current==='en'&&trimmed!==base)node.nodeValue=raw.replace(trimmed,base);
  }
  document.documentElement.lang=current==='badini'?'ku':current==='sorani'?'ckb':current;

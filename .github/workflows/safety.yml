@@ -26,5 +26,9 @@ jobs:
           if (!scripts.length) throw Error('No inline scripts found');
           scripts.forEach((m, i) => new vm.Script(m[1], { filename: 'inline-' + i + '.js' }));
           NODE
+      - name: Check cloud and language scripts
+        run: |
+          node --check cloud/cloud-sync.js
+          node --check i18n/languages.js
       - name: Run safety checks
         run: node tests/safety.test.cjs

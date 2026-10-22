@@ -10,6 +10,7 @@ export async function restoreCloudRecovery({client,packageToRestore,saveCurrentB
  if(await confirmRestore({currentRevision:plan.expectedRevision,sourceRevision:plan.sourceRevision})!==true)throw Error('Restore not confirmed');
  const latest=await client.read();
  if(!latest.initialized||latest.revision!==plan.expectedRevision)throw Error('Cloud changed; restart recovery');
+ if(plan.expectedRevision===Number.MAX_SAFE_INTEGER)throw Error('Cloud revision limit reached; recovery write blocked');
  validateCloudState(latest.state);
  if(JSON.stringify(latest.state)!==JSON.stringify(current.state))throw Error('Cloud content changed without revision; restart recovery');
  const revision=await client.write(plan.expectedRevision,plan.state);

@@ -21,8 +21,8 @@ function buttons(){
  el('login').disabled=busy||Boolean(client);
 }
 function showFinancialSummary(snapshot){
- const {day,sessionIncome,salesIncome,otherAdjustments,net,unlinkedSessionMovements,cashDifference,requiresReconciliation}=cloudDailyCashSummary(snapshot.state,Date.now());
- const report='Business day '+day+' (Baghdad 06:00 cutoff) · Session income '+sessionIncome.toLocaleString('en-US')+' IQD · Sales '+salesIncome.toLocaleString('en-US')+' IQD · Adjustments '+otherAdjustments.toLocaleString('en-US')+' IQD · Net '+net.toLocaleString('en-US')+' IQD'+(requiresReconciliation?' · ⚠ RECONCILE CASH: '+cashDifference.toLocaleString('en-US')+' IQD difference'+(unlinkedSessionMovements?' · '+unlinkedSessionMovements+' unlinked legacy movement(s)':''):'');
+ const {day,sessionIncome,salesIncome,otherAdjustments,net,unlinkedSessionMovements,cashDifference,requiresReconciliation,saleMovementsMismatch}=cloudDailyCashSummary(snapshot.state,Date.now());
+ const report='Business day '+day+' (Baghdad 06:00 cutoff) · Session income '+sessionIncome.toLocaleString('en-US')+' IQD · Sales '+salesIncome.toLocaleString('en-US')+' IQD · Adjustments '+otherAdjustments.toLocaleString('en-US')+' IQD · Net '+net.toLocaleString('en-US')+' IQD'+(requiresReconciliation?' · ⚠ RECONCILE CASH: '+cashDifference.toLocaleString('en-US')+' IQD difference'+(unlinkedSessionMovements?' · '+unlinkedSessionMovements+' unlinked legacy movement(s)':'')+(saleMovementsMismatch?' · Sale ledger mismatch':''):'');
  el('financialSummary').textContent=report;
 }
 function showSessionHistory(snapshot){
@@ -133,6 +133,7 @@ el('dailyReport').addEventListener('click',async()=>{
    ['Expected net',report.net,'IQD'],
    ['Recorded cash movements',report.recordedCashMovements,'IQD'],
    ['Cash difference',report.cashDifference,'IQD'],
+   ['Sale ledger mismatch',report.saleMovementsMismatch?'YES':'NO',''],
    ['Requires reconciliation',report.requiresReconciliation?'YES':'NO',''],
    ['Unlinked legacy session movements',report.unlinkedSessionMovements,'records']
   ];

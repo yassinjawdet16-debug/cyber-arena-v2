@@ -6,6 +6,12 @@ ar:{'Sessions / PS timer':'الجلسات / مؤقت البلايستيشن','Pr
 badini:{'Sessions / PS timer':'دانیشتن / کاتژمێرا پلەیستەیشن','Printed bills':'پسوولەیێن چاپکری','Unprinted bills':'پسوولەیێن نەچاپکری','Extra Sales':'فرۆتنێن زێدە','Reports & Backup':'راپۆرت و پاشەکەفتن','Settings':'ڕێکخستن','Quick Start':'دەستپێکرنا بلەز','Session History':'مێژوویا دانیشتنێ','Daily Cash Register':'سندوقا رۆژانە','Full backup':'پاشەکەفتنا تەمام','Restore backup':'ڤەگەڕاندنا پاشەکەفتنێ','Export CSV':'دەرئێخستنا CSV','Daily report':'راپۆرتا رۆژانە','Owner PIN':'کۆدا خودانێ','Print':'چاپکرن','Preview':'پێشاندن','Cancel':'هەلوەشاندن','Confirm':'پەسەندکرن'},
 sorani:{'Sessions / PS timer':'دانیشتنەکان / کاتژمێری پلەیستەیشن','Printed bills':'پسووڵە چاپکراوەکان','Unprinted bills':'پسووڵە چاپنەکراوەکان','Extra Sales':'فرۆشتنی زیاتر','Reports & Backup':'ڕاپۆرت و پاڵپشتی','Settings':'ڕێکخستنەکان','Quick Start':'دەستپێکردنی خێرا','Session History':'مێژووی دانیشتنەکان','Daily Cash Register':'سندووقی ڕۆژانە','Full backup':'پاڵپشتی تەواو','Restore backup':'گەڕاندنەوەی پاڵپشتی','Export CSV':'هەناردەکردنی CSV','Daily report':'ڕاپۆرتی ڕۆژانە','Owner PIN':'کۆدی خاوەن','Print':'چاپکردن','Preview':'پێشبینین','Cancel':'هەڵوەشاندنەوە','Confirm':'پشتڕاستکردنەوە'}
 };
+const supplemental={
+ar:{'PlayStation Stations':'محطات البلايستيشن','Sales history':'سجل المبيعات','Recent cash movements':'حركات النقد الأخيرة','Sync safely':'مزامنة آمنة','Upload snapshot':'رفع نسخة','Recover cloud snapshot':'استعادة نسخة سحابية','Sign in to cloud':'تسجيل الدخول للسحابة','Sign out':'تسجيل الخروج','Finish':'إنهاء','Discount':'خصم'},
+badini:{'PlayStation Stations':'ئامێرێن پلەیستەیشن','Sales history':'مێژوویا فرۆتنێ','Recent cash movements':'جووڵەیێن پارەیێن دووماهی','Sync safely':'هاڤدەنگکرنا پاراستی','Upload snapshot':'بارکرنا پاشەکەفتنێ','Recover cloud snapshot':'ڤەگەڕاندنا پاشەکەفتنا ئەوری','Sign in to cloud':'چوونا ژوور بۆ ئەورێ','Sign out':'دەرکەفتن','Finish':'دووماهی پێ بینە','Discount':'داشکاندن'},
+sorani:{'PlayStation Stations':'ئامێرەکانی پلەیستەیشن','Sales history':'مێژووی فرۆشتن','Recent cash movements':'جووڵەکانی دوایی پارە','Sync safely':'هاوکاتکردنی پارێزراو','Upload snapshot':'بارکردنی پاڵپشتی','Recover cloud snapshot':'گەڕاندنەوەی پاڵپشتی هەوری','Sign in to cloud':'چوونەژوورەوەی هەور','Sign out':'دەرچوون','Finish':'کۆتایی پێبهێنە','Discount':'داشکاندن'}
+};
+for(const code of Object.keys(supplemental))Object.assign(dictionary[code],supplemental[code]);
 const original=new WeakMap();
 let current='en';
 function translate(){

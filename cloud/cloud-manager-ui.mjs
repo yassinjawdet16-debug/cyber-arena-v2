@@ -71,7 +71,7 @@ el('login').addEventListener('click',async()=>{
   session=createCloudUiSession(client,{render,onBlocked:e=>message('Cloud locked: '+e)});
   const snapshot=await session.refresh();needsRefresh=false;
   message('Owner authenticated. Cloud revision '+snapshot.revision,'ok');
- }catch(e){client?.logout();client=null;session=null;el('password').value='';message('Login or initial refresh failed: '+e.message)}
+ }catch(e){client?.logout();client=null;session=null;needsRefresh=false;el('password').value='';el('stations').replaceChildren();el('revision').textContent='Cloud not connected';el('financialSummary').textContent='Sign in to view verified cloud totals.';message('Login or initial refresh failed: '+e.message)}
  finally{busy=false;buttons()}
 });
 el('refresh').addEventListener('click',refresh);

@@ -39,7 +39,7 @@ export function validateCloudState(state){
   addId(session,'completed session');
   if(!expectedStations.some(st=>st.id===session.stationId))fail('Invalid completed session station: '+session.id);
   if(!Number.isSafeInteger(Number(session.endedAt))||Number(session.endedAt)<Number(session.startedAt)||!Number.isSafeInteger(Number(session.startedAt))||Number(session.startedAt)<0)fail('Invalid completed session timestamps: '+session.id);
-  if(!Number.isFinite(Number(session.charge))||Number(session.charge)<0||Number(session.charge)%250!==0)fail('Invalid completed session charge: '+session.id);
+  if(!Number.isSafeInteger(session.charge)||session.charge<0||session.charge%250!==0)fail('Invalid completed session charge: '+session.id);
  }
  for(const [stationId,session] of Object.entries(state.active)){
   if(!expectedStations.some(x=>x.id===stationId)||!object(session)||session.stationId!==stationId)fail('Invalid active station');
@@ -64,13 +64,13 @@ export function validateCloudState(state){
   if(b.kind!=='session')continue;
   if(!completed.has(b.sessionId))fail('Orphan session bill: '+b.id);
   bills.set(b.sessionId,(bills.get(b.sessionId)||0)+1);
-  if(Number(b.amount)!==Number(completed.get(b.sessionId).charge))fail('Bill amount mismatch: '+b.id);
+  if(!Number.isSafeInteger(b.amount)||b.amount<0||b.amount%250!==0||b.amount!==completed.get(b.sessionId).charge)fail('Bill amount mismatch: '+b.id);
  }
  for(const m of state.adjustments){
   if(m.kind!=='session'||!m.sessionId)continue;
   if(!completed.has(m.sessionId))fail('Orphan session cash movement: '+m.id);
   movements.set(m.sessionId,(movements.get(m.sessionId)||0)+1);
-  if(Number(m.amount)!==Number(completed.get(m.sessionId).charge))fail('Cash movement amount mismatch: '+m.id);
+  if(!Number.isSafeInteger(m.amount)||m.amount<0||m.amount%250!==0||m.amount!==completed.get(m.sessionId).charge)fail('Cash movement amount mismatch: '+m.id);
  }
  for(const session of allSessions){
   if(bills.get(session.id)!==1)fail('Expected one bill for session '+session.id);

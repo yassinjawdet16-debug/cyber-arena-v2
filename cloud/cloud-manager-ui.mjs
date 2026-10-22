@@ -6,7 +6,7 @@ import {cloudDailyCashSummary} from './cloud-cash-summary.mjs';
 import {createCloudRecoveryPackage,inspectCloudRecoveryPackage} from './cloud-recovery.mjs';
 const el=id=>document.getElementById(id);
 const stations=Array.from({length:16},(_,i)=>i===0?'VIP-01':(i<8?'PS5-':'PS4-')+String(i+1).padStart(2,'0'));
-let client=null,session=null,busy=false,needsRefresh=false;
+let client=null,session=null,busy=false,needsRefresh=false,connectionEpoch=0;
 const newId=()=>crypto.randomUUID();
 const safeNumber=id=>Number(el(id).value);
 const message=(text,level='error')=>{el('status').textContent=text;el('status').dataset.level=level};
@@ -57,19 +57,20 @@ function render(snapshot){
 }
 async function refresh(){
  if(!session)throw Error('Owner sign-in required');
+ const startedEpoch=connectionEpoch;
  busy=true;buttons();
- try{const snapshot=await session.refresh();needsRefresh=false;message('Cloud refreshed. Revision '+snapshot.revision,'ok')}
+ try{const snapshot=await session.refresh();if(startedEpoch!==connectionEpoch)throw Error('Connection changed during refresh; refresh again');needsRefresh=false;message('Cloud refreshed. Revision '+snapshot.revision,'ok')}
  catch(e){el('stations').replaceChildren();el('revision').textContent='Cloud refresh failed — editing locked';el('financialSummary').textContent='Cloud totals unavailable until a successful refresh.';message('Cloud refresh blocked: '+e.message+'. No financial edits allowed.')}
  finally{busy=false;buttons()}
 }
 el('login').addEventListener('click',async()=>{
- if(busy||client)return;busy=true;buttons();
+ if(busy||client)return;const startedEpoch=connectionEpoch;busy=true;buttons();
  try{
   client=createArenaCloudClient({url:el('url').value.trim(),publishableKey:el('key').value.trim()});
   await client.login(el('email').value.trim(),el('password').value);
   el('password').value='';
   session=createCloudUiSession(client,{render,onBlocked:e=>message('Cloud locked: '+e)});
-  const snapshot=await session.refresh();needsRefresh=false;
+  const snapshot=await session.refresh();if(startedEpoch!==connectionEpoch)throw Error('Connection changed during sign-in; sign in again');needsRefresh=false;
   message('Owner authenticated. Cloud revision '+snapshot.revision,'ok');
  }catch(e){client?.logout();client=null;session=null;needsRefresh=false;el('password').value='';el('stations').replaceChildren();el('revision').textContent='Cloud not connected';el('financialSummary').textContent='Sign in to view verified cloud totals.';message('Login or initial refresh failed: '+e.message)}
  finally{busy=false;buttons()}
@@ -151,6 +152,7 @@ setInterval(updateCountdowns,1000);
 
 // Invalidate even during a pending write. Never cancel or retry an uncertain commit.
 function invalidateCloudView(text){
+ connectionEpoch++;
  needsRefresh=true;
  if(session&&!busy){try{session.lock()}catch(_){}}
  message(text);

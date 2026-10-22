@@ -24,7 +24,7 @@ export const cloudCommands={
    if(!Number.isSafeInteger(endedAt)||endedAt<a.startedAt||!billId||!movementId||billId===movementId||!/^(?:\\d{4})-(?:\\d{2})-(?:\\d{2})$/.test(businessDay)||businessDay!==iraqBusinessDay(endedAt))throw Error('Invalid completion');
    const all=[...state.sessions,...Object.values(state.archives).flat()];
    if(all.some(x=>x.id===a.id)||state.bills.some(x=>x.sessionId===a.id)||state.adjustments.some(x=>x.kind==='session'&&x.sessionId===a.id))throw Error('Session already completed or billed');
-   const ids=new Set([...all,...state.bills,...state.adjustments,...state.sales].map(x=>x.id));
+   const ids=new Set([...all,...Object.values(state.active),...state.bills,...state.adjustments,...state.sales].map(x=>x.id));
    if(ids.has(billId)||ids.has(movementId))throw Error('Duplicate financial ID');
    const mins=Math.max(0,(endedAt-a.startedAt)/60000),raw=mins*a.rate/60;
    const requested=a.discountType==='percent'?raw*(Number(a.discountValue)||0)/100:Number(a.discountValue??a.discount??0);

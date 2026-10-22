@@ -6,7 +6,7 @@ const stations=html.match(/const DEFAULT_STATIONS\s*=\s*(\[[\s\S]*?\]);/);
 const validator=html.match(/function validateArenaBackup\(x\)\{[^\n]+\}/);
 assert.ok(stations&&validator,'Backup validator and stations must exist');
 const ctx={};vm.runInNewContext(stations[0]+'\n'+validator[0],ctx);
-const good={stations:JSON.parse(JSON.stringify(ctx.DEFAULT_STATIONS)),settings:{pin:'test'},sessions:[],sales:[],bills:[],adjustments:[],active:{},archives:{}};
+const good={stations:JSON.parse(JSON.stringify(vm.runInNewContext(stations[0]+';DEFAULT_STATIONS'))),settings:{pin:'test'},sessions:[],sales:[],bills:[],adjustments:[],active:{},archives:{}};
 assert.equal(ctx.validateArenaBackup(good),true);
 assert.equal(ctx.validateArenaBackup({...good,stations:good.stations.slice(1)}),false);
 assert.equal(ctx.validateArenaBackup({...good,bills:null}),false);

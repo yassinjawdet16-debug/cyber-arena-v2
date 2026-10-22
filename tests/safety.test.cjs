@@ -88,3 +88,8 @@ check('archive uses the Baghdad business day boundary', () => {
 check('overnight sessions are classified by business day', () => {
  assert.match(html, /const day=baghdadDayStart\(new Date\(s\.endedAt\)\);if\(force\|\|day<cutoffDay\)/);
 });
+
+check('archives are stored under Baghdad business-day keys', () => {
+ assert.match(html, /function businessDayForTimestamp\(ts\)\{return baghdadDayStart\(new Date\(ts\)\)\}/);
+ assert.match(html, /const d=businessDayForTimestamp\(s\.endedAt\);\(data\.archives\[d\]\?\?=\[\]\)\.push\(s\)/);
+});

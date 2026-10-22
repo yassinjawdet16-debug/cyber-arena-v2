@@ -34,5 +34,5 @@ try{current=localStorage.getItem('cyberArenaV2_language')||'en'}catch(e){}
 if(!dictionary[current])current='en';
 document.getElementById('arenaLanguage').value=current;
 translate();
-new MutationObserver(()=>{if(current!=='en')translate()}).observe(document.body,{childList:true,subtree:true,characterData:true});
+new MutationObserver(()=>{if(current!=='en')translate()}).observe(document.body,{childList:true,subtree:true,characterData:false});
 })();

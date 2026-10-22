@@ -28,7 +28,7 @@ export const cloudCommands={
    if(ids.has(billId)||ids.has(movementId))throw Error('Duplicate financial ID');
    const mins=Math.max(0,(endedAt-a.startedAt)/60000),raw=mins*a.rate/60;
    const requested=a.discountType==='percent'?raw*(Number(a.discountValue)||0)/100:Number(a.discountValue??a.discount??0);
-   if(!Number.isFinite(raw)||!Number.isFinite(requested)||requested<0)throw Error('Invalid session charge');
+   if(!Number.isFinite(raw)||!Number.isSafeInteger(Math.round(raw))||!Number.isFinite(requested)||requested<0)throw Error('Invalid session charge');
    const discount=Math.min(raw,requested),charge=Math.round(Math.max(0,raw-discount)/250)*250;
    if(!Number.isSafeInteger(charge))throw Error('Invalid final charge');
    const session={...a,endedAt,minutes:Math.ceil(mins),rawCharge:Math.round(raw),discount,discountType:a.discountType||'fixed',discountValue:a.discountValue??a.discount??0,charge,completedAt:endedAt,archived:false};

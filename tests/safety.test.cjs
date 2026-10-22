@@ -40,7 +40,6 @@ check('archive and backup controls exist', () => {
 check('no unexpected remote JavaScript imports', () => {
   assert.doesNotMatch(html, /<script[^>]+src=["']https?:\/\//i);
 });
-if (!process.exitCode) console.log('Cyber Arena V2 safety checks passed.');
 
 check('cloud adapter requires authenticated atomic RPC', () => {
  const cloud = fs.readFileSync(path.join(__dirname, '..', 'cloud', 'cloud-sync.js'), 'utf8');
@@ -139,3 +138,5 @@ check('daily report reconciles session income, sales, and manual adjustments', (
  assert.match(html,/Cash adjustments: \$\{money\(adjustmentTotal\)\}/);
  assert.match(html,/Cash total: \$\{money\(sessionTotal\+salesTotal\+adjustmentTotal\)\}/);
 });
+
+if (!process.exitCode) console.log('Cyber Arena V2 safety checks passed.');

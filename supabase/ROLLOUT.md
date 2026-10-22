@@ -25,3 +25,9 @@ Current status: cloud adapter and SQL schema are staged, **not connected to the 
 3. After local changes, choose **Sync safely**. It uploads only when the cloud still matches the baseline. A conflict never silently replaces data.
 4. For a conflict, download both local and cloud backups, reconcile offline, then explicitly recover or upload the chosen copy. No automatic merge is implemented.
 5. Session timers must not be active when syncing changes. Real Supabase end-to-end tests remain required before using this for live business data.
+
+## Safety before PC/iPhone rollout
+- Stop all active sessions before initial upload, Safe Sync upload, or cloud recovery. The UI blocks transferring active timers to avoid conflicting devices.
+- Use one device as the active operator until live two-device testing confirms the workflow. Safe Sync is manual, not live collaboration.
+- Verify a cloud snapshot's session totals and sales against a downloaded local JSON backup before recovering onto another device.
+- A passing automated test run and real Supabase Auth/RLS tests are still required before treating cloud recovery as production-ready.

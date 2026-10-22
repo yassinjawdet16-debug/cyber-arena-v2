@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {cloudCommands} from '../cloud/cloud-commands.mjs';
+import {prepareCloudState} from '../cloud/cloud-state.mjs';
+const stations=Array.from({length:16},(_,i)=>({id:i===0?'VIP-01':(i<8?'PS5-':'PS4-')+String(i+1).padStart(2,'0'),type:i===0?'VIP':i<8?'PS5':'PS4',rate:i===0?10000:i<8?5000:3000}));
+const fresh=()=>({stations,active:{},sessions:[],archives:{},bills:[],sales:[],adjustments:[],settings:{pin:'1234',bridgeToken:'secret',printerIp:'192.168.1.41'}});
+test('secrets excluded from cloud state',()=>{const s=fresh(),v=prepareCloudState(s);assert.equal(v.settings.pin,undefined);assert.equal(v.settings.bridgeToken,undefined);assert.equal(s.settings.pin,'1234')});
+test('station cannot be double started',()=>{const s=fresh();cloudCommands.start({stationId:'VIP-01',id:'S1',at:100000,minutes:60})(s);assert.equal(s.active['VIP-01'].rate,10000);assert.throws(()=>cloudCommands.start({stationId:'VIP-01',id:'S2',at:100001})(s),/unavailable/);prepareCloudState(s)});
+test('discount bounds enforced',()=>{const s=fresh();cloudCommands.start({stationId:'PS5-02',id:'S1',at:100000})(s);assert.throws(()=>cloudCommands.discount({stationId:'PS5-02',type:'percent',value:101})(s),/Invalid/);assert.throws(()=>cloudCommands.discount({stationId:'PS5-02',type:'fixed',value:125})(s),/Invalid/);});
+test('sales create matching cash movement and reject duplicates',()=>{const s=fresh(),op={id:'SALE1',movementId:'MOV1',name:'Water',qty:2,price:500,at:100000,businessDay:'2026-10-22'};cloudCommands.sale(op)(s);assert.equal(s.sales[0].total,1000);assert.equal(s.adjustments[0].amount,1000);assert.throws(()=>cloudCommands.sale(op)(s),/Duplicate/);prepareCloudState(s)});
+test('cash adjustments enforce denominations and unique IDs',()=>{const s=fresh();assert.throws(()=>cloudCommands.cash({id:'C1',amount:125,at:100000,businessDay:'2026-10-22'})(s),/Invalid/);const op={id:'C1',amount:-500,at:100000,businessDay:'2026-10-22'};cloudCommands.cash(op)(s);assert.throws(()=>cloudCommands.cash(op)(s),/Invalid/);prepareCloudState(s)});
+test('orphan bill and mismatched amounts rejected',()=>{const s=fresh();s.bills.push({id:'B1',kind:'session',sessionId:'missing',amount:500});assert.throws(()=>prepareCloudState(s),/Orphan/);s.bills=[];s.sessions.push({id:'S1',stationId:'VIP-01',startedAt:100000,endedAt:3700000,charge:10000});s.bills.push({id:'B1',kind:'session',sessionId:'S1',amount:500});assert.throws(()=>prepareCloudState(s),/amount mismatch/)});

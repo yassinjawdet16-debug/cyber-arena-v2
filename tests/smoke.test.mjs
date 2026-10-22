@@ -1396,3 +1396,12 @@ test('receipts, modal content, and status messages use three-language dynamic tr
  assert.match(source,/translateDynamic\('Hourly rate'\)/);
  assert.match(source,/translateDynamic\('TOTAL'\)/);
 });
+
+test('iPhone language layout provides safe areas, touch targets and long-label wrapping',()=>{
+ assert.match(html,/env\(safe-area-inset-bottom\)/);
+ assert.match(html,/env\(safe-area-inset-top\)/);
+ assert.match(html,/\[dir="rtl"\] \.receipt/);
+ assert.match(html,/min-height:44px/);
+ assert.match(html,/@media\(max-width:360px\)/);
+ assert.match(html,/font-size:16px;min-height:44px/);
+});

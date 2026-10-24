@@ -13,7 +13,7 @@ let now=10000000;const realDate=Date;class MockDate extends realDate{static now(
 const stations=[{id:'PS5-02',rate:5000},{id:'PS4-11',rate:3000},{id:'PS5-04',rate:5000},{id:'PS4-10',rate:3000}];
 const active={};const data={stations,active,sessions:[],adjustments:[],bills:[],settings:{}};
 let confirm=()=>{},form='',status='';
-const ctx={data,Date:MockDate,Math,Number,Object,Array,JSON,console,uid:(p)=>p+'-'+(++ctx.seq),seq:0,round250:n=>Math.round(n/250)*250,money:n=>String(n),localDateKey:()=> '2026-10-24',setStatus:s=>status=s,openForm:(t,b,cb)=>{form=b;confirm=cb},closeModal:()=>{},save:()=>{},renderAll:()=>{},openBillPreview:()=>{},document:{getElementById:id=>({value:id==='transferTarget'?'PS4-11':id==='groupTarget'?'SES-3':id==='finishDiscountType'?'fixed':'0'})}};
+const ctx={data,activeFor:id=>active[id]||null,Date:MockDate,Math,Number,Object,Array,JSON,console,uid:(p)=>p+'-'+(++ctx.seq),seq:0,round250:n=>Math.round(n/250)*250,money:n=>String(n),localDateKey:()=> '2026-10-24',setStatus:s=>status=s,openForm:(t,b,cb)=>{form=b;confirm=cb},closeModal:()=>{},save:()=>{},renderAll:()=>{},openBillPreview:()=>{},document:{getElementById:id=>({value:id==='transferTarget'?'PS4-11':id==='groupTarget'?'SES-3':id==='finishDiscountType'?'fixed':'0'})}};
 vm.createContext(ctx);vm.runInContext(code,ctx);
 active['PS5-02']={id:'SES-1',stationId:'PS5-02',startedAt:now-3600000,rate:5000,discount:0};
 ctx.transferStation('PS5-02');confirm();assert.equal(active['PS5-02'],undefined);assert.ok(active['PS4-11']);assert.equal(active['PS4-11'].segments[0].rate,5000);

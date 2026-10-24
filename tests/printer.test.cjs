@@ -10,7 +10,7 @@ async function scenario(response,ok=true){
  const messages=[];
  let request;
  let saved=0;
- const ctx={data:{bills:[bill],settings:{bridgeUrl:'http://127.0.0.1:8787/print',bridgeToken:'test-token'}},fetch:async(url,options)=>{request={url,options};return {ok,status:ok?200:503,json:async()=>response}},billText:()=> 'receipt',Date,JSON,Error,save:()=>saved++,renderAll:()=>{},renderBills:()=>{},setStatus:s=>messages.push(s),window:{print:()=>{throw Error('Browser dialog should not open')}}};
+ const ctx={data:{bills:[bill],settings:{bridgeUrl:'http://127.0.0.1:8787/print',bridgeToken:'test-token'}},fetch:async(url,options)=>{request={url,options};return {ok,status:ok?200:503,json:async()=>response}},billText:()=> 'receipt',Date,JSON,Error,save:()=>saved++,closeModal:()=>{},renderAll:()=>{},renderBills:()=>{},setStatus:s=>messages.push(s),window:{print:()=>{throw Error('Browser dialog should not open')}}};
  vm.runInNewContext(html.slice(start,end),ctx);
  await ctx.printBill('BILL-TEST');
  return {bill,messages,saved,request};

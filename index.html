@@ -133,12 +133,26 @@ function resumeSession(id){const a=activeFor(id);if(!a||!a.pausedAt)return;const
 function finishSession(id){
 const a=activeFor(id);if(!a)return;
 const now=Date.now(),raw=sessionRaw(a,now),preview=money(round250(Math.max(0,raw-(a.discount||0))));
-const linked=a.groupId&&groupMembers(id).length>0;
-openForm('Finish '+id,`<p>Current charge for <b>${id}</b>: <b>${preview}</b></p>${linked?'<p>Only this PlayStation will stop. Other linked stations keep running. One combined receipt will be ready after the last station finishes.</p>':''}<label>Discount type</label><select id="finishDiscountType"><option value="fixed">Fixed IQD</option><option value="percent">Percentage (%)</option></select><label>Discount value</label><input id="finishDiscountValue" type="number" min="0" step="any" value="${a.discount||0}"><p class="muted">${linked?'The group receipt is held until every linked station finishes.':'Finishing creates an unprinted bill. Printing remains manual.'}</p>`,()=>confirmFinishSession(id),'Finish station')
+const linked=a.groupId&&groupMembers(id).length>1;
+openForm('Finish '+id,`<p>Current charge for <b>${id}</b>: <b>${preview}</b></p>${linked?`<label>Which stations do you want to finish?</label><select id="finishScope"><option value="one">Finish this station only (${id})</option><option value="all">Finish all combined stations (${groupMembers(id).map(m=>m.stationId).join(', ')})</option></select><p class="muted">One station: other timers keep running. All stations: one combined receipt is created immediately.</p>`:''}<label>Discount type</label><select id="finishDiscountType"><option value="fixed">Fixed IQD</option><option value="percent">Percentage (%)</option></select><label>Discount value</label><input id="finishDiscountValue" type="number" min="0" step="any" value="${a.discount||0}"><p class="muted">Discount applies to the selected station. Other stations keep their existing discounts.</p>`,()=>confirmFinishChoice(id),'Finish selected')
+
 }
-function confirmFinishSession(id){
+function confirmFinishChoice(id){
 const a=activeFor(id);if(!a)return;
+const scope=document.getElementById('finishScope')?.value||'one';
 const value=Number(document.getElementById('finishDiscountValue').value),type=document.getElementById('finishDiscountType').value;
+if(!Number.isFinite(value)||value<0||(type==='percent'&&value>100)){setStatus('🔴 Invalid discount.');return}
+if(scope==='all'&&a.groupId){
+const ids=groupMembers(id).map(m=>m.stationId);
+if(ids.length>1&&!confirm('Finish all '+ids.length+' combined stations now?'))return;
+const chosen=ids.filter(x=>x!==id);
+for(const otherId of chosen){const other=activeFor(otherId);if(other)finishStationCharge(otherId,other.discount||0,'fixed')}
+finishStationCharge(id,value,type);
+}else finishStationCharge(id,value,type)
+}
+function confirmFinishSession(id){const a=activeFor(id);if(!a)return;const value=Number(document.getElementById('finishDiscountValue').value),type=document.getElementById('finishDiscountType').value;finishStationCharge(id,value,type)}
+function finishStationCharge(id,value,type){
+const a=activeFor(id);if(!a)return;
 if(!Number.isFinite(value)||value<0||(type==='percent'&&value>100)){setStatus('🔴 Invalid discount.');return}
 const now=Date.now(),segments=sessionSegments(a,now),raw=sessionRaw(a,now),discount=Math.min(raw,type==='percent'?raw*value/100:value),charge=round250(Math.max(0,raw-discount));
 const minutes=segments.reduce((n,p)=>n+p.minutes,0);

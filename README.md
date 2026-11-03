@@ -18,4 +18,4 @@ Cyber Arena V2 currently stores operational data locally. The existing Supabase 
 9. Roll out behind a default-OFF owner-only feature flag with a reversible migration, separate staging data, and an explicit rollback procedure. **No production activation until owner approval after testing.**
 
 ### Current state
-This branch is a design/staging checkpoint only. No production behavior, data, Supabase schema, or GitHub Pages deployment has been changed.
+A staging-only SQL prototype is in `supabase/staging-command-log.sql`. It records authenticated owner-scoped command IDs and revisions, rejects stale writes, and treats exact retries as idempotent. It **does not execute station commands or modify charges**. The file is NOT deployed and must only be tested in an isolated Supabase project. Real-time subscriptions, financial state transitions, offline behavior, migrations, and two-device tests remain to be built. No production behavior, live data, or GitHub Pages deployment has been changed.
